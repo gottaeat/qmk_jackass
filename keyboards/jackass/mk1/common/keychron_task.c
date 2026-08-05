@@ -65,18 +65,47 @@ static bool process_record_keychron(uint16_t keycode, keyrecord_t *record) {
     return true;
 }
 
-static void backlight_key_indication(void) {
+static void status_key_indication(void) {
+    transport_t transport = get_transport();
+    uint8_t     esc_red   = 0;
+    uint8_t     esc_green = 0;
+    uint8_t     esc_blue  = 0;
+
+    switch (transport) {
+        case TRANSPORT_USB:
+            esc_red = 255;
+            break;
+
+        case TRANSPORT_BLUETOOTH:
+            esc_blue = 255;
+            break;
+
+        case TRANSPORT_P2P4:
+            esc_green = 255;
+            break;
+
+        default:
+            break;
+    }
+
+    bool mac_layout = get_highest_layer(default_layer_state) == 0;
+
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            keypos_t key = {.row = row, .col = col};
+            keypos_t key       = {.row = row, .col = col};
+            uint16_t keycode   = keymap_key_to_keycode(layer_switch_get_layer(key), key);
+            uint8_t  led_index = g_led_config.matrix_co[row][col];
 
-            if (keymap_key_to_keycode(layer_switch_get_layer(key), key) != UG_TOGG) {
+            if (led_index == NO_LED) {
                 continue;
             }
 
-            uint8_t led_index = g_led_config.matrix_co[row][col];
-            if (led_index != NO_LED) {
+            if (keycode == UG_TOGG) {
                 rgb_matrix_set_color(led_index, 0, 0, 255);
+            } else if (keycode == KC_LGUI || keycode == KC_LCMMD) {
+                rgb_matrix_set_color(led_index, 0, mac_layout ? 255 : 0, mac_layout ? 0 : 255);
+            } else if (keycode == KC_ESC && transport != TRANSPORT_NONE) {
+                rgb_matrix_set_color(led_index, esc_red, esc_green, esc_blue);
             }
         }
     }
@@ -91,7 +120,7 @@ static bool rgb_matrix_indicators_keychron(void) {
     }
 
     profile_key_indication();
-    backlight_key_indication();
+    status_key_indication();
     rgb_matrix_indicators_bt();
     profile_indication();
 

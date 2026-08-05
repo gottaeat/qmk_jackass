@@ -46,7 +46,7 @@ Removed behavior and source:
 - RGB effects, hue/saturation/speed controls, and retail lighting.
 - Generic board/MCU/driver branches not used by the K2 HE ANSI hardware.
 
-The only visible lighting states are adjustable solid white, red Caps Lock, white wireless beacons with the rest of the board off, the white number-row battery gauge, and the requested one-second profile confirmations. The backlight can be toggled off, but no effects or color controls are exposed. Cable mode forces the backlight off while USB power is absent.
+The only visible lighting states are adjustable solid white, red Caps Lock, green/blue OS-layout status on the left GUI key, red/blue/green transport status on Esc, white wireless beacons with the rest of the board off, the white number-row battery gauge, and the requested one-second profile confirmations. The backlight can be toggled off, but no effects or color controls are exposed. Cable mode forces the backlight off while USB power is absent.
 
 ## K2 HE dependency graph audit
 
@@ -60,7 +60,7 @@ The retained paths are:
 4. The A9/A10 physical selector is debounced by `wireless_pre_task()`. Its unchanged K2 mapping selects Bluetooth, 2.4 GHz, or USB and then calls Keychron's retained `set_transport()` path.
 5. Bluetooth and 2.4 GHz commands and interrupt events pass through `lkbt51.c`, `wireless.c`, and `report_buffer.c`. Connection events feed the reduced-from-Keychron indicator state machine. Bluetooth host indices 1-3 map to LED indices 17-19; Keychron's 2.4 GHz host index 24 maps to LED index 20, the number 4 key.
 6. Fn+1/2/3 and Fn+4 reach `keychron_wireless_common.c`. A Bluetooth host tap reconnects/selects that host; holding a Bluetooth host or the 2.4 GHz key for two seconds invokes Keychron pairing. Fn+B reaches the retained battery measurement and the focused number-row renderer while operating wirelessly on battery.
-7. Each housekeeping pass runs the physical selector, LKBT51 event parser, indicator timer, pairing-hold timer, battery task, and low-power task. RGB rendering applies brightness-scaled static white, Caps Lock red, wireless/battery indication, profile confirmation, and finally the cable-unplugged blackout.
+7. Each housekeeping pass runs the physical selector, LKBT51 event parser, indicator timer, pairing-hold timer, battery task, and low-power task. RGB rendering applies brightness-scaled static white, Caps Lock and the persistent key markers, wireless/battery indication, profile confirmation, and finally the cable-unplugged blackout.
 
 The closure audit also checked every board-local header against QMK's generated dependency files and every board-local object against the final linker map. Every header is included by the build, and the linker discards no non-empty Jackass MK1 code or data section. GCC's static analyzer reports no issues across the 25 board-local C translation units.
 
@@ -96,8 +96,8 @@ The default profile is profile 1:
 
 ## Stock switch and wireless behavior
 
-- The top switch retains Keychron's single-DIP mapping: Mac selects layers 0/1 and Windows selects layers 2/3. Both base layers use Ctrl, Option/Alt, Meta/GUI on the bottom left.
-- The mode selector retains the K2 pin mapping and order for 2.4 GHz, cable, and Bluetooth. In cable mode the backlight is forced off until USB power is present.
+- The top switch retains Keychron's single-DIP mapping: Mac selects layers 0/1 and Windows selects layers 2/3. Both base layers use Ctrl, Option/Alt, Meta/GUI on the bottom left. The active left GUI key is green in Mac mode and blue in Windows mode.
+- The mode selector retains the K2 pin mapping and order for 2.4 GHz, cable, and Bluetooth. Esc is red in wired mode, blue in Bluetooth mode, and green in 2.4 GHz mode. In cable mode the backlight is forced off until USB power is present.
 - The top-right lighting key toggles the backlight in either OS mode. Its blue marker dynamically follows whichever key actively resolves to `UG_TOGG`, without a hardcoded LED index. Mac F5/F6 adjust static-white brightness directly; Windows uses Fn+F5/F6. On/off and brightness are persisted, while mode, hue, saturation, and speed changes remain unavailable.
 - Mac F3/F4 invoke Keychron's Mission Control and Launchpad consumer actions. Fn+F3/F4 retain ordinary F3/F4.
 - Entering/reconnecting Bluetooth blacks out the board and blinks the selected host's number key. Fn+1/2/3 selects the three hosts; holding a host key for two seconds starts pairing.

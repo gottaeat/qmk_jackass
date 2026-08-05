@@ -14,6 +14,8 @@
 - [x] Restore Keychron's Mac Mission Control and Launchpad actions on F3/F4.
 - [x] Restore only static-white brightness and backlight toggle controls, without restoring effects or color controls.
 - [x] Make the active `UG_TOGG` key stay blue without hardcoding an LED index.
+- [x] Make the active left GUI key show Mac mode in green and Windows mode in blue without hardcoding an LED index.
+- [x] Make the active Esc key show wired mode in red, Bluetooth in blue, and 2.4 GHz in green without hardcoding an LED index.
 - [x] Retain Mac/Windows layers, shortcut macros, Ctrl-Option/Alt-Meta/GUI order, NKRO, wear-leveling, battery, charging, and low-power behavior.
 - [x] Retain Keychron LKBT51 Bluetooth, 2.4 GHz, wired transport switching, reports, pairing, reconnection, and wake handling.
 - [x] Port Keychron/ChibiOS's `BOARD_OTG_NOVBUSSENS` fix locally so PA9 remains the K2 HE mode-select input under QMK 0.33.13.
@@ -37,6 +39,8 @@
 - [ ] Confirm the screenshot key cycles only profiles 1 and 2 and persists the selected profile across power loss.
 - [ ] Confirm the full board shows red for one second for profile 1 and yellow for one second for profile 2, then returns to white.
 - [ ] Confirm Caps Lock is red and returns correctly after a battery/profile indication.
+- [ ] Confirm the left GUI key is green in Mac mode and blue in Windows mode, including after Fn-layer use and temporary indications.
+- [ ] Confirm Esc is red in powered wired mode, blue in Bluetooth mode, and green in 2.4 GHz mode, and that temporary wireless/battery/profile indications retain their existing precedence.
 - [ ] Confirm Fn+B in battery-powered Bluetooth and 2.4 GHz modes turns off non-number LEDs, shows an accurate number-row battery gauge, and restores the prior backlight state after three seconds.
 - [ ] Confirm Mac F3/F4 invoke Mission Control/Launchpad and Fn+F3/F4 send ordinary function keys.
 - [ ] Confirm the top-right key toggles the backlight and F5/F6 brightness adjustment works in Mac mode and through Fn in Windows mode; verify both settings persist.
