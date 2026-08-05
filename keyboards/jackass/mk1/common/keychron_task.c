@@ -7,6 +7,9 @@
  */
 
 #include "quantum.h"
+#include "eeprom.h"
+#include "nvm_eeprom_eeconfig_internal.h"
+#include <lib/lib8tion/lib8tion.h>
 #include "keychron_common.h"
 #include "profile.h"
 #include "indicator.h"
@@ -14,9 +17,48 @@
 #include "transport.h"
 #include "lpm.h"
 
+static bool process_record_keychron_backlight(uint16_t keycode, keyrecord_t *record) {
+    if (!record->event.pressed) {
+        return true;
+    }
+
+    switch (keycode) {
+        case UG_TOGG:
+            rgb_matrix_toggle();
+            return false;
+
+        case UG_VALU:
+            if (!rgb_matrix_config.enable) {
+                rgb_matrix_toggle();
+                return false;
+            }
+
+            rgb_matrix_config.hsv.v = qadd8(rgb_matrix_config.hsv.v, RGB_MATRIX_VAL_STEP);
+            while (rgb_matrix_config.hsv.v <= RGB_MATRIX_BRIGHTNESS_TURN_OFF_VAL) {
+                rgb_matrix_config.hsv.v = qadd8(rgb_matrix_config.hsv.v, RGB_MATRIX_VAL_STEP);
+            }
+            eeprom_write_byte((uint8_t *)EECONFIG_RGB_MATRIX + offsetof(rgb_config_t, hsv.v), rgb_matrix_config.hsv.v);
+            return false;
+
+        case UG_VALD:
+            if (rgb_matrix_config.enable && rgb_matrix_config.hsv.v > RGB_MATRIX_BRIGHTNESS_TURN_OFF_VAL) {
+                rgb_matrix_config.hsv.v = qsub8(rgb_matrix_config.hsv.v, RGB_MATRIX_VAL_STEP);
+                eeprom_write_byte((uint8_t *)EECONFIG_RGB_MATRIX + offsetof(rgb_config_t, hsv.v), rgb_matrix_config.hsv.v);
+            }
+            if (rgb_matrix_config.enable && rgb_matrix_config.hsv.v <= RGB_MATRIX_BRIGHTNESS_TURN_OFF_VAL) {
+                rgb_matrix_toggle();
+            }
+            return false;
+
+        default:
+            return true;
+    }
+}
+
 static bool process_record_keychron(uint16_t keycode, keyrecord_t *record) {
     if (!process_record_keychron_common(keycode, record)) return false;
     if (!process_record_profile(keycode, record)) return false;
+    if (!process_record_keychron_backlight(keycode, record)) return false;
 
     if (!process_record_wireless(keycode, record)) return false;
 
@@ -24,7 +66,8 @@ static bool process_record_keychron(uint16_t keycode, keyrecord_t *record) {
 }
 
 static bool rgb_matrix_indicators_keychron(void) {
-    rgb_matrix_set_color_all(255, 255, 255);
+    uint8_t brightness = rgb_matrix_get_val();
+    rgb_matrix_set_color_all(brightness, brightness, brightness);
 
     if (host_keyboard_led_state().caps_lock) {
         rgb_matrix_set_color(CAPS_LOCK_INDEX, 255, 0, 0);

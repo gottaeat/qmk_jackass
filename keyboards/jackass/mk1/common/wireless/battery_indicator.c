@@ -12,13 +12,24 @@
 #define BAT_LEVEL_DISPLAY_TIME 3000
 
 static bool     active;
+static bool     restore_disabled;
 static uint8_t  percentage;
 static uint32_t display_timer;
 
 void battery_indicator_start(uint8_t value) {
+    if (!active) {
+        restore_disabled = !rgb_matrix_is_enabled();
+        if (restore_disabled) {
+            rgb_matrix_enable_noeeprom();
+        }
+    }
+
     percentage    = value;
     display_timer = timer_read32();
     active        = true;
+
+    battery_indicator_render();
+    rgb_matrix_update_pwm_buffers();
 }
 
 bool battery_indicator_active(void) {
@@ -39,6 +50,9 @@ void battery_indicator_render(void) {
 static void battery_indicator_update(void) {
     if (active && timer_elapsed32(display_timer) >= BAT_LEVEL_DISPLAY_TIME) {
         active = false;
+        if (restore_disabled) {
+            rgb_matrix_disable_noeeprom();
+        }
     }
 }
 

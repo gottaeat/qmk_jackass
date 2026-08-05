@@ -69,7 +69,7 @@ bool process_record_keychron_wireless(uint16_t keycode, keyrecord_t *record) {
             break;
 
         case BAT_LVL:
-            if ((get_transport() & TRANSPORT_WIRELESS) && !usb_power_connected()) {
+            if (record->event.pressed && (get_transport() & TRANSPORT_WIRELESS) && !usb_power_connected()) {
                 battery_indicator_start(battery_get_percentage());
             }
             break;

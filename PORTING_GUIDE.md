@@ -33,6 +33,8 @@ Retained Keychron behavior:
 - The stock physical Bluetooth/2.4 GHz/wired mode selection and Mac/Windows layer selection.
 - The stock Bluetooth host and 2.4 GHz connection-state beacons: number keys 1-3 for Bluetooth hosts and number key 4 for 2.4 GHz.
 - Fn+B battery indication on the number row.
+- Keychron's Mac Mission Control and Launchpad actions on F3/F4.
+- Static-white brightness adjustment and backlight on/off state, persisted through QMK's RGB Matrix configuration.
 - NKRO and Keychron's Mac/Windows shortcut macros.
 - The K2 HE LED map and Keychron SNLED27351 SPI driver.
 
@@ -41,10 +43,10 @@ Removed behavior and source:
 - ISO and JIS layouts and all non-default keymaps.
 - VIA, raw HID, factory testing, and retail/demo paths.
 - Joystick, gamepad, XInput, SOCD, OKMC, rapid trigger, and actuation toggle.
-- RGB effects, color controls, and retail lighting.
+- RGB effects, hue/saturation/speed controls, and retail lighting.
 - Generic board/MCU/driver branches not used by the K2 HE ANSI hardware.
 
-The only visible lighting states are solid white, red Caps Lock, white wireless beacons with the rest of the board off, the white number-row battery gauge, and the requested one-second profile confirmations. Cable mode forces the backlight off while USB power is absent.
+The only visible lighting states are adjustable solid white, red Caps Lock, white wireless beacons with the rest of the board off, the white number-row battery gauge, and the requested one-second profile confirmations. The backlight can be toggled off, but no effects or color controls are exposed. Cable mode forces the backlight off while USB power is absent.
 
 ## K2 HE dependency graph audit
 
@@ -57,8 +59,8 @@ The retained paths are:
 3. `board.c` initializes Keychron common code. That initializes the LKBT51 module, report buffer, wireless state machine, battery measurement, RTC timer, and STM32F401 low-power implementation.
 4. The A9/A10 physical selector is debounced by `wireless_pre_task()`. Its unchanged K2 mapping selects Bluetooth, 2.4 GHz, or USB and then calls Keychron's retained `set_transport()` path.
 5. Bluetooth and 2.4 GHz commands and interrupt events pass through `lkbt51.c`, `wireless.c`, and `report_buffer.c`. Connection events feed the reduced-from-Keychron indicator state machine. Bluetooth host indices 1-3 map to LED indices 17-19; Keychron's 2.4 GHz host index 24 maps to LED index 20, the number 4 key.
-6. Fn+1/2/3 and Fn+4 reach `keychron_wireless_common.c`. A Bluetooth host tap reconnects/selects that host; holding a Bluetooth host or the 2.4 GHz key for two seconds invokes Keychron pairing. Fn+B reaches the retained battery measurement and the focused number-row renderer.
-7. Each housekeeping pass runs the physical selector, LKBT51 event parser, indicator timer, pairing-hold timer, battery task, and low-power task. RGB rendering applies static white, Caps Lock red, wireless/battery indication, profile confirmation, and finally the cable-unplugged blackout.
+6. Fn+1/2/3 and Fn+4 reach `keychron_wireless_common.c`. A Bluetooth host tap reconnects/selects that host; holding a Bluetooth host or the 2.4 GHz key for two seconds invokes Keychron pairing. Fn+B reaches the retained battery measurement and the focused number-row renderer while operating wirelessly on battery.
+7. Each housekeeping pass runs the physical selector, LKBT51 event parser, indicator timer, pairing-hold timer, battery task, and low-power task. RGB rendering applies brightness-scaled static white, Caps Lock red, wireless/battery indication, profile confirmation, and finally the cable-unplugged blackout.
 
 The clean-build compile flags contain the retained `LK_WIRELESS_ENABLE`, `WIRELESS_CONFIG_ENABLE`, bootmagic, DIP-switch, NKRO, RGB Matrix, EEPROM, and embedded-flash wear-leveling defines. They do not contain VIA, factory-test, joystick, gamepad, XInput, SOCD, OKMC, rapid-trigger, dynamic-keymap, or toggle-feature defines.
 
@@ -68,6 +70,7 @@ Keychron's branch differs from QMK `0.33.13`. The compatibility changes are inte
 
 - `keyboard.json` uses QMK's custom matrix, custom RGB Matrix driver, STM32F401, DFU, dip-switch, and embedded-flash wear-leveling declarations.
 - `drivers/rgb_driver.c` adapts the retained Keychron SNLED27351 SPI calls to QMK's four-function `rgb_matrix_driver_t` interface.
+- The retained SNLED27351 initialization now replays Keychron's software PWM shadow after the hardware PWM RAM is cleared. This makes the stock transport-change driver reinitialization restore both LED chips immediately instead of waiting for later indications to dirty them one at a time.
 - `drivers/hal_usb_lld.h` carries Keychron/ChibiOS commit `ba10f3a80` locally so QMK 0.33.13 does not reclaim PA9 for USB-VBUS sensing and break the physical transport selector.
 - `debounce.c` preserves Keychron's no-debounce copy behavior using QMK `0.33.13`'s custom debounce signature.
 - Keychron GPIO calls use the equivalent QMK `0.33.13` GPIO names.
@@ -93,9 +96,11 @@ The default profile is profile 1:
 
 - The top switch retains Keychron's single-DIP mapping: Mac selects layers 0/1 and Windows selects layers 2/3. Both base layers use Ctrl, Option/Alt, Meta/GUI on the bottom left.
 - The mode selector retains the K2 pin mapping and order for 2.4 GHz, cable, and Bluetooth. In cable mode the backlight is forced off until USB power is present.
+- The top-right lighting key toggles the backlight in either OS mode. Mac F5/F6 adjust static-white brightness directly; Windows uses Fn+F5/F6. On/off and brightness are persisted, while mode, hue, saturation, and speed changes remain unavailable.
+- Mac F3/F4 invoke Keychron's Mission Control and Launchpad consumer actions. Fn+F3/F4 retain ordinary F3/F4.
 - Entering/reconnecting Bluetooth blacks out the board and blinks the selected host's number key. Fn+1/2/3 selects the three hosts; holding a host key for two seconds starts pairing.
 - Entering/reconnecting 2.4 GHz blacks out the board and blinks number 4. Holding Fn+4 for two seconds retains Keychron's receiver-pairing action.
-- Fn+B blacks out the board, lights one white number-row key per 10% battery for three seconds, and then restores the normal static-white state.
+- Fn+B in either battery-powered wireless mode blacks out the board, lights one white number-row key per 10% battery for three seconds, and then restores the prior static-white on/off state.
 - In cable mode, holding Esc while connecting USB triggers QMK bootmagic at matrix row 0/column 0 and jumps to STM32 DFU.
 
 ## Docker workflow

@@ -35,6 +35,22 @@ void keychron_common_init(void) {
 
 bool process_record_keychron_common(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
+        case KC_MCTRL:
+            if (record->event.pressed) {
+                register_code(KC_MISSION_CONTROL);
+            } else {
+                unregister_code(KC_MISSION_CONTROL);
+            }
+            return false;
+
+        case KC_LNPAD:
+            if (record->event.pressed) {
+                register_code(KC_LAUNCHPAD);
+            } else {
+                unregister_code(KC_LAUNCHPAD);
+            }
+            return false;
+
         case KC_LOPTN:
         case KC_ROPTN:
         case KC_LCMMD:

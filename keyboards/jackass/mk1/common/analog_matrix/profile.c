@@ -51,6 +51,7 @@ static void profile_select(uint8_t profile_index) {
     profile_indicator_timer   = timer_read32();
     profile_indicator_running = true;
     rgb_matrix_enable_noeeprom();
+    rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_COLOR);
 }
 
 bool process_record_profile(uint16_t keycode, keyrecord_t *record) {

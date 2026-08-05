@@ -98,8 +98,15 @@ void snled27351_init_drivers(void) {
         snled27351_set_led_control_register(index, true, true, true);
     }
 
-    for (uint8_t i = 0; i < SNLED27351_DRIVER_COUNT; i++)
+    for (uint8_t i = 0; i < SNLED27351_DRIVER_COUNT; i++) {
         snled27351_update_led_control_registers(i);
+
+        /* Hardware initialization clears PWM RAM. Restore Keychron's shadow
+         * buffer so transport-change reinitialization cannot leave a partial
+         * keyboard dark until a later indication dirties each driver. */
+        snled27351_write_pwm_buffer(i);
+        driver_buffers[i].pwm_buffer_dirty = false;
+    }
 }
 
 static void snled27351_init(uint8_t index) {

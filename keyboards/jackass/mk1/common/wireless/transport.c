@@ -144,7 +144,10 @@ transport_t get_transport(void) {
 /* Changing transport may cause bronw-out reset of led driver
  * without MCU reset, which lead backlight to not work,
  * reinit the led driver workgound this issue */
-static void reinit_led_driver(void) {
+static void reinit_led_driver(transport_t new_transport) {
+    bool    backlight_enabled = rgb_matrix_is_enabled();
+    uint8_t brightness        = rgb_matrix_get_val();
+
     snled27351_shutdown();
 
     /* Wait circuit to discharge for a while */
@@ -153,14 +156,23 @@ static void reinit_led_driver(void) {
     rgb_matrix_init();
     rgb_matrix_enable_noeeprom();
     rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_COLOR);
-    rgb_matrix_sethsv_noeeprom(0, 0, 255);
+    rgb_matrix_sethsv_noeeprom(0, 0, brightness);
+
+    if (backlight_enabled && (new_transport != TRANSPORT_USB || usb_power_connected())) {
+        rgb_matrix_set_color_all(brightness, brightness, brightness);
+    } else {
+        rgb_matrix_set_color_all(0, 0, 0);
+    }
+    if (!backlight_enabled) {
+        rgb_matrix_disable_noeeprom();
+    }
+    rgb_matrix_update_pwm_buffers();
 }
 
 static void transport_changed(transport_t new_transport) {
-    (void)new_transport;
     indicator_init();
 
-    reinit_led_driver();
+    reinit_led_driver(new_transport);
 
     led_update_kb(host_keyboard_led_state());
 }

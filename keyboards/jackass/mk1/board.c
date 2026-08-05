@@ -18,10 +18,16 @@ bool dip_switch_update_kb(uint8_t index, bool active) {
 }
 
 void keyboard_post_init_kb(void) {
+    bool    backlight_enabled = rgb_matrix_is_enabled();
+    uint8_t brightness        = rgb_matrix_get_val();
+
     keychron_common_init();
     rgb_matrix_enable_noeeprom();
     rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_COLOR);
-    rgb_matrix_sethsv_noeeprom(0, 0, 255);
+    rgb_matrix_sethsv_noeeprom(0, 0, brightness);
+    if (!backlight_enabled) {
+        rgb_matrix_disable_noeeprom();
+    }
     keyboard_post_init_user();
 }
 
