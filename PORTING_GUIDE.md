@@ -94,7 +94,7 @@ The default profile is profile 1:
 
 - The top switch retains Keychron's single-DIP mapping: Mac selects layers 0/1 and Windows selects layers 2/3. Both base layers use Ctrl, Option/Alt, Meta/GUI on the bottom left.
 - The mode selector retains the K2 pin mapping and order for 2.4 GHz, cable, and Bluetooth. In cable mode the backlight is forced off until USB power is present.
-- The top-right lighting key toggles the backlight in either OS mode. Mac F5/F6 adjust static-white brightness directly; Windows uses Fn+F5/F6. On/off and brightness are persisted, while mode, hue, saturation, and speed changes remain unavailable.
+- The top-right lighting key toggles the backlight in either OS mode. Its blue marker dynamically follows whichever key actively resolves to `UG_TOGG`, without a hardcoded LED index. Mac F5/F6 adjust static-white brightness directly; Windows uses Fn+F5/F6. On/off and brightness are persisted, while mode, hue, saturation, and speed changes remain unavailable.
 - Mac F3/F4 invoke Keychron's Mission Control and Launchpad consumer actions. Fn+F3/F4 retain ordinary F3/F4.
 - Entering/reconnecting Bluetooth blacks out the board and blinks the selected host's number key. Fn+1/2/3 selects the three hosts; holding a host key for two seconds starts pairing.
 - Entering/reconnecting 2.4 GHz blacks out the board and blinks number 4. Holding Fn+4 for two seconds retains Keychron's receiver-pairing action.

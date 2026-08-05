@@ -65,6 +65,23 @@ static bool process_record_keychron(uint16_t keycode, keyrecord_t *record) {
     return true;
 }
 
+static void backlight_key_indication(void) {
+    for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+        for (uint8_t col = 0; col < MATRIX_COLS; col++) {
+            keypos_t key = {.row = row, .col = col};
+
+            if (keymap_key_to_keycode(layer_switch_get_layer(key), key) != UG_TOGG) {
+                continue;
+            }
+
+            uint8_t led_index = g_led_config.matrix_co[row][col];
+            if (led_index != NO_LED) {
+                rgb_matrix_set_color(led_index, 0, 0, 255);
+            }
+        }
+    }
+}
+
 static bool rgb_matrix_indicators_keychron(void) {
     uint8_t brightness = rgb_matrix_get_val();
     rgb_matrix_set_color_all(brightness, brightness, brightness);
@@ -74,6 +91,7 @@ static bool rgb_matrix_indicators_keychron(void) {
     }
 
     profile_key_indication();
+    backlight_key_indication();
     rgb_matrix_indicators_bt();
     profile_indication();
 
