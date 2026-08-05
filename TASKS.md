@@ -12,6 +12,7 @@
 - [x] Bind battery level to Fn+B.
 - [x] Retain Mac/Windows layers, shortcut macros, Ctrl-Option/Alt-Meta/GUI order, NKRO, wear-leveling, battery, charging, and low-power behavior.
 - [x] Retain Keychron LKBT51 Bluetooth, 2.4 GHz, wired transport switching, reports, pairing, reconnection, and wake handling.
+- [x] Port Keychron/ChibiOS's `BOARD_OTG_NOVBUSSENS` fix locally so PA9 remains the K2 HE mode-select input under QMK 0.33.13.
 - [x] Retain the K2 HE Bluetooth host 1/2/3 and 2.4 GHz number-4 connection beacons with the rest of the backlight off.
 - [x] Reduce lighting to white, red Caps Lock, white wireless/battery indication, and red/yellow profile confirmations.
 - [x] Force cable-mode backlighting off until USB power is present.

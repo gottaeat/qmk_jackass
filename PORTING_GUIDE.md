@@ -13,6 +13,8 @@ This preserves a reviewable Keychron source trail. The implementation is a reduc
 
 The import was rechecked with Git object IDs: the source/import blobs for the K2 HE board file, LKBT51 module, wireless transport, and both SNLED27351 SPI driver files are byte-identical. A full tree comparison also reports no differences between Keychron's common subtree and the copy recorded by the exact-import commit.
 
+Keychron 2025q3 also pins `Keychron/ChibiOS` commit `41e112ce20d85dd8be9362777fbf107586d1cbd2`, rather than QMK's ChibiOS. Its commit `ba10f3a80` fixes `BOARD_OTG_NOVBUSSENS` on STM32 OTGv1. That fix is required by the K2 HE because PA9 is the keyboard's mode-select input but is also STM32's hardware USB-VBUS sense pin. `drivers/hal_usb_lld.h` applies Keychron's no-op USB connect/disconnect macros as a board-local overlay; QMK core and its submodule remain unchanged.
+
 The repository also contains:
 
 - `keychron-2025q3`, tracking `keychron/2025q3`.
@@ -66,6 +68,7 @@ Keychron's branch differs from QMK `0.33.13`. The compatibility changes are inte
 
 - `keyboard.json` uses QMK's custom matrix, custom RGB Matrix driver, STM32F401, DFU, dip-switch, and embedded-flash wear-leveling declarations.
 - `drivers/rgb_driver.c` adapts the retained Keychron SNLED27351 SPI calls to QMK's four-function `rgb_matrix_driver_t` interface.
+- `drivers/hal_usb_lld.h` carries Keychron/ChibiOS commit `ba10f3a80` locally so QMK 0.33.13 does not reclaim PA9 for USB-VBUS sensing and break the physical transport selector.
 - `debounce.c` preserves Keychron's no-debounce copy behavior using QMK `0.33.13`'s custom debounce signature.
 - Keychron GPIO calls use the equivalent QMK `0.33.13` GPIO names.
 - The Hall scan writes its resulting rows through QMK's current custom-matrix callback.
