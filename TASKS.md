@@ -12,9 +12,12 @@
 - [x] Bind battery level to Fn+B.
 - [x] Retain Mac/Windows layers, shortcut macros, Ctrl-Option/Alt-Meta/GUI order, NKRO, wear-leveling, battery, charging, and low-power behavior.
 - [x] Retain Keychron LKBT51 Bluetooth, 2.4 GHz, wired transport switching, reports, pairing, reconnection, and wake handling.
-- [x] Reduce lighting to white, red Caps Lock, battery gauge, and red/yellow profile confirmations.
+- [x] Retain the K2 HE Bluetooth host 1/2/3 and 2.4 GHz number-4 connection beacons with the rest of the backlight off.
+- [x] Reduce lighting to white, red Caps Lock, white wireless/battery indication, and red/yellow profile confirmations.
+- [x] Force cable-mode backlighting off until USB power is present.
 - [x] Remove non-ANSI layouts, VIA/raw HID, factory testing, retail/demo lighting, game-controller, joystick, XInput, SOCD, OKMC, rapid-trigger, and toggle sources.
 - [x] Add Docker build files and the porting guide.
+- [x] Audit the generated dependency/object manifest and confirm every board-local C file is consumed by the build.
 - [x] Pass QMK keyboard lint in Docker.
 - [x] Produce a QMK firmware binary in Docker.
 
@@ -26,11 +29,13 @@
 - [ ] Confirm the screenshot key cycles only profiles 1 and 2 and persists the selected profile across power loss.
 - [ ] Confirm the full board shows red for one second for profile 1 and yellow for one second for profile 2, then returns to white.
 - [ ] Confirm Caps Lock is red and returns correctly after a battery/profile indication.
-- [ ] Confirm Fn+B shows an accurate battery gauge and charging/full/critical-battery handling remains correct.
+- [ ] Confirm Fn+B turns off non-number LEDs, shows an accurate number-row battery gauge, and restores static white after three seconds.
 - [ ] Test USB typing, NKRO, suspend, and remote wake.
-- [ ] Pair and reconnect all three Bluetooth host slots; test keyboard, consumer, system, mouse-wake, and NKRO reports.
-- [ ] Pair and reconnect the 2.4 GHz receiver and test the same report paths.
+- [ ] Pair and reconnect all three Bluetooth host slots; confirm the selected number 1/2/3 beacon blinks with all other LEDs off, then test keyboard, consumer, system, mouse-wake, and NKRO reports.
+- [ ] Pair and reconnect the 2.4 GHz receiver; confirm number 4 blinks with all other LEDs off, then test the same report paths.
 - [ ] Exercise the physical Bluetooth/2.4 GHz/wired selector repeatedly, including transport changes under load.
+- [ ] In cable mode, confirm the keyboard/backlight stays off while unplugged and starts normally after USB is connected.
+- [ ] In cable mode, hold Esc while connecting USB and confirm the keyboard enters STM32 DFU.
 - [ ] Test sleep/wake and idle power behavior on battery in both wireless modes.
 - [ ] Confirm the physical Mac/Windows switch selects the intended layers and all retained macros work on both operating systems.
 - [ ] Confirm the bottom-left order is Ctrl, Option/Alt, Meta/GUI in both modes.

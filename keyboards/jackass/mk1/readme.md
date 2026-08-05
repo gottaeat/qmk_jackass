@@ -12,9 +12,11 @@ Jackass MK1 is a focused ANSI firmware target for the Keychron K2 HE hardware. I
 - Profile 2 (play): 1.5 mm actuation and a one-second full-board yellow confirmation.
 - The key between F12 and Delete cycles profiles.
 - `JM_PROF1`, `JM_PROF2`, and `JM_PROF_NEXT` are bindable keyboard keycodes.
-- Fn+B (`BAT_LVL`) shows the battery level.
+- Fn+B (`BAT_LVL`) turns off the board and shows the battery level in white across number keys 1-0 for three seconds.
 - Lighting is solid white. Caps Lock is red while active.
 - The physical Mac/Windows layer switch and Bluetooth/2.4 GHz/wired mode selector work through the retained Keychron paths.
+- Bluetooth reconnect/pairing turns off the board and blinks the selected host key (Fn+1/2/3); 2.4 GHz does the same on number 4, with receiver pairing on a two-second Fn+4 hold.
+- Cable mode keeps the backlight off until USB power is present.
 - The left modifiers are Ctrl, Option/Alt, Meta/GUI in both OS modes.
 
 There is no VIA, factory-test, game-controller, XInput, joystick, SOCD, rapid-trigger, actuation-toggle, lighting-effect, or lighting-control support.

@@ -11,6 +11,8 @@
 #include "profile.h"
 #include "indicator.h"
 #include "wireless.h"
+#include "transport.h"
+#include "lpm.h"
 
 static bool process_record_keychron(uint16_t keycode, keyrecord_t *record) {
     if (!process_record_keychron_common(keycode, record)) return false;
@@ -30,6 +32,11 @@ static bool rgb_matrix_indicators_keychron(void) {
 
     rgb_matrix_indicators_bt();
     profile_indication();
+
+    /* Cable mode has no backlight until USB power is present. */
+    if (get_transport() == TRANSPORT_USB && !usb_power_connected()) {
+        rgb_matrix_set_color_all(0, 0, 0);
+    }
 
     return true;
 }

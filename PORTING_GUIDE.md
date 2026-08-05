@@ -11,6 +11,8 @@ The port deliberately used two phases:
 
 This preserves a reviewable Keychron source trail. The implementation is a reduction and board-local QMK compatibility adaptation, not a rewrite using analogous upstream QMK features.
 
+The import was rechecked with Git object IDs: the source/import blobs for the K2 HE board file, LKBT51 module, wireless transport, and both SNLED27351 SPI driver files are byte-identical. A full tree comparison also reports no differences between Keychron's common subtree and the copy recorded by the exact-import commit.
+
 The repository also contains:
 
 - `keychron-2025q3`, tracking `keychron/2025q3`.
@@ -27,6 +29,8 @@ Retained Keychron behavior:
 - Two regular-trigger profiles, persisted through QMK wear-leveling.
 - LKBT51 Bluetooth and 2.4 GHz transport, HID reports, host pairing/reconnection, battery telemetry, charging state, low-battery shutdown, remote wake, and low-power handling.
 - The stock physical Bluetooth/2.4 GHz/wired mode selection and Mac/Windows layer selection.
+- The stock Bluetooth host and 2.4 GHz connection-state beacons: number keys 1-3 for Bluetooth hosts and number key 4 for 2.4 GHz.
+- Fn+B battery indication on the number row.
 - NKRO and Keychron's Mac/Windows shortcut macros.
 - The K2 HE LED map and Keychron SNLED27351 SPI driver.
 
@@ -35,10 +39,26 @@ Removed behavior and source:
 - ISO and JIS layouts and all non-default keymaps.
 - VIA, raw HID, factory testing, and retail/demo paths.
 - Joystick, gamepad, XInput, SOCD, OKMC, rapid trigger, and actuation toggle.
-- RGB effects, color controls, retail lighting, and connection-state lighting.
+- RGB effects, color controls, and retail lighting.
 - Generic board/MCU/driver branches not used by the K2 HE ANSI hardware.
 
-The only visible lighting states are solid white, red Caps Lock, the battery gauge, and the requested one-second profile confirmations.
+The only visible lighting states are solid white, red Caps Lock, white wireless beacons with the rest of the board off, the white number-row battery gauge, and the requested one-second profile confirmations. Cable mode forces the backlight off while USB power is absent.
+
+## K2 HE dependency graph audit
+
+The reduction was checked from QMK's generated dependency files and final object manifest, not only from the handwritten makefiles. Every C file below `keyboards/jackass/mk1` is consumed by the build: 22 appear as board-path objects, `board.c` and `debounce.c` appear as QMK keyboard objects, and `keymaps/default/keymap.c` is consumed by QMK's generated keymap translation unit.
+
+The retained paths are:
+
+1. QMK startup calls bootmagic, which scans the custom matrix at the default row 0/column 0 position. That K2 HE ANSI position is Esc, so holding Esc while connecting USB enters the STM32 DFU bootloader.
+2. `mk1.c` and the custom matrix callback drive Keychron's analog scan, Hall calibration, regular-trigger action, and external calibration EEPROM code. Profile selection feeds the scan's actuation point and persists through QMK embedded-flash wear-leveling.
+3. `board.c` initializes Keychron common code. That initializes the LKBT51 module, report buffer, wireless state machine, battery measurement, RTC timer, and STM32F401 low-power implementation.
+4. The A9/A10 physical selector is debounced by `wireless_pre_task()`. Its unchanged K2 mapping selects Bluetooth, 2.4 GHz, or USB and then calls Keychron's retained `set_transport()` path.
+5. Bluetooth and 2.4 GHz commands and interrupt events pass through `lkbt51.c`, `wireless.c`, and `report_buffer.c`. Connection events feed the reduced-from-Keychron indicator state machine. Bluetooth host indices 1-3 map to LED indices 17-19; Keychron's 2.4 GHz host index 24 maps to LED index 20, the number 4 key.
+6. Fn+1/2/3 and Fn+4 reach `keychron_wireless_common.c`. A Bluetooth host tap reconnects/selects that host; holding a Bluetooth host or the 2.4 GHz key for two seconds invokes Keychron pairing. Fn+B reaches the retained battery measurement and the focused number-row renderer.
+7. Each housekeeping pass runs the physical selector, LKBT51 event parser, indicator timer, pairing-hold timer, battery task, and low-power task. RGB rendering applies static white, Caps Lock red, wireless/battery indication, profile confirmation, and finally the cable-unplugged blackout.
+
+The clean-build compile flags contain the retained `LK_WIRELESS_ENABLE`, `WIRELESS_CONFIG_ENABLE`, bootmagic, DIP-switch, NKRO, RGB Matrix, EEPROM, and embedded-flash wear-leveling defines. They do not contain VIA, factory-test, joystick, gamepad, XInput, SOCD, OKMC, rapid-trigger, dynamic-keymap, or toggle-feature defines.
 
 ## Board-local QMK 0.33.13 adaptations
 
@@ -62,9 +82,18 @@ The default profile is profile 1:
 | `JM_PROF1` | Select work profile | 2.5 mm | Full red, 1 second |
 | `JM_PROF2` | Select play profile | 1.5 mm | Full yellow, 1 second |
 | `JM_PROF_NEXT` | Cycle profile 1/2 | Selected profile | Selected profile color, 1 second |
-| `BAT_LVL` | Show battery gauge | n/a | White gauge, 3 seconds |
+| `BAT_LVL` | Show battery gauge | n/a | Board off except white number-row gauge, 3 seconds |
 
 `JM_PROF_NEXT` defaults to the physical screenshot key between F12 and Delete. `BAT_LVL` defaults to Fn+B. These are normal keyboard keycodes in `common/keychron_common.h`, so a source keymap can bind them elsewhere.
+
+## Stock switch and wireless behavior
+
+- The top switch retains Keychron's single-DIP mapping: Mac selects layers 0/1 and Windows selects layers 2/3. Both base layers use Ctrl, Option/Alt, Meta/GUI on the bottom left.
+- The mode selector retains the K2 pin mapping and order for 2.4 GHz, cable, and Bluetooth. In cable mode the backlight is forced off until USB power is present.
+- Entering/reconnecting Bluetooth blacks out the board and blinks the selected host's number key. Fn+1/2/3 selects the three hosts; holding a host key for two seconds starts pairing.
+- Entering/reconnecting 2.4 GHz blacks out the board and blinks number 4. Holding Fn+4 for two seconds retains Keychron's receiver-pairing action.
+- Fn+B blacks out the board, lights one white number-row key per 10% battery for three seconds, and then restores the normal static-white state.
+- In cable mode, holding Esc while connecting USB triggers QMK bootmagic at matrix row 0/column 0 and jumps to STM32 DFU.
 
 ## Docker workflow
 

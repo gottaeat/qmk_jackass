@@ -29,6 +29,8 @@ void battery_indicator_render(void) {
     uint8_t led_list[] = BAT_LEVEL_LED_LIST;
     uint8_t lit_count  = (percentage + 9) / 10;
 
+    rgb_matrix_set_color_all(0, 0, 0);
+
     for (uint8_t i = 0; i < sizeof(led_list); i++) {
         rgb_matrix_set_color(led_list[i], i < lit_count ? 255 : 0, i < lit_count ? 255 : 0, i < lit_count ? 255 : 0);
     }
