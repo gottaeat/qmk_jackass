@@ -28,9 +28,7 @@
  * bytes RAM, with default setting, used RAM size is
  *        sizeof(report_buffer_t) * 256 = 34* 256  =  8704 bytes
  */
-#ifndef REPORT_BUFFER_QUEUE_SIZE
-#    define REPORT_BUFFER_QUEUE_SIZE 256
-#endif
+#define REPORT_BUFFER_QUEUE_SIZE 256
 
 extern wt_func_t wireless_transport;
 
@@ -40,13 +38,8 @@ extern wt_func_t wireless_transport;
  * the anchor point of bluetooth interval. The bluetooth connection interval varies
  * if BLE is used, invoke report_buffer_set_inverval() to update the value
  */
-#if defined(LK_WIRELESS_ENABLE)
-#    define REPORT_BUFFER_RETRY_INTERVAL 2
+#define REPORT_BUFFER_RETRY_INTERVAL 2
 uint8_t report_interval = DEFAULT_2P4G_REPORT_INVERVAL_MS;
-#else
-#    define REPORT_BUFFER_RETRY_INTERVAL 7
-uint8_t report_interval = DEFAULT_BLE_REPORT_INVERVAL_MS;
-#endif
 
 static uint32_t report_timer_buffer = 0;
 uint32_t        retry_time_buffer   = 0;
@@ -59,8 +52,6 @@ uint8_t         retry = 0;
 void report_buffer_task(void);
 
 void report_buffer_init(void) {
-    // Initialise the report queue
-    //memset(&report_buffer_queue, 0, sizeof(report_buffer_queue));
     report_buffer_queue_head = 0;
     report_buffer_queue_tail = 0;
     retry                    = 0;
@@ -113,8 +104,7 @@ void report_buffer_set_retry(uint8_t times) {
 }
 
 void report_buffer_task(void) {
-    if ((wireless_get_state() == WT_CONNECTED || (wireless_get_state() == WT_PARING && is_wireless_pin_code_entry()) )
-    && (!report_buffer_is_empty() || retry) && report_buffer_next_inverval()) {
+    if ((wireless_get_state() == WT_CONNECTED || (wireless_get_state() == WT_PARING && is_wireless_pin_code_entry())) && (!report_buffer_is_empty() || retry) && report_buffer_next_inverval()) {
         bool pending_data = false;
 
         if (retry == 0) {
@@ -134,14 +124,10 @@ void report_buffer_task(void) {
         }
 
         if (pending_data) {
-#if defined(NKRO_ENABLE) && defined(WIRELESS_NKRO_ENABLE)
             if (kb_rpt.type == REPORT_TYPE_NKRO && wireless_transport.send_nkro) {
                 wireless_transport.send_nkro(&kb_rpt.nkro.mods);
             } else if (kb_rpt.type == REPORT_TYPE_KB && wireless_transport.send_keyboard)
                 wireless_transport.send_keyboard(&kb_rpt.keyboard.mods);
-#else
-            if (kb_rpt.type == REPORT_TYPE_KB && wireless_transport.send_keyboard) wireless_transport.send_keyboard(&kb_rpt.keyboard.mods);
-#endif
             if (kb_rpt.type == REPORT_TYPE_CONSUMER && wireless_transport.send_consumer) wireless_transport.send_consumer(kb_rpt.consumer);
             report_timer_buffer = timer_read32();
             lpm_timer_reset();

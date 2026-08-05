@@ -19,19 +19,8 @@
 #include "report.h"
 
 /* Default report interval value */
-#ifndef DEFAULT_BLE_REPORT_INVERVAL_MS
-#    define DEFAULT_BLE_REPORT_INVERVAL_MS 3
-#endif
-
-/* Default report interval value */
-#ifndef DEFAULT_2P4G_REPORT_INVERVAL_MS
-#    define DEFAULT_2P4G_REPORT_INVERVAL_MS 1
-#endif
-
-/* Default report interval value */
-#ifndef RETPORT_RETRY_COUNT
-#    define RETPORT_RETRY_COUNT 30
-#endif
+#define DEFAULT_2P4G_REPORT_INVERVAL_MS 1
+#define RETPORT_RETRY_COUNT 30
 
 enum {
     REPORT_TYPE_NONE,

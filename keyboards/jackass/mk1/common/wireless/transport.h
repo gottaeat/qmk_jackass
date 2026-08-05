@@ -24,22 +24,9 @@ typedef enum {
     TRANSPORT_MAX,
 } transport_t;
 
-#ifdef NKRO_ENABLE
-typedef struct {
-    bool usb : 1;
-    bool bluetooth : 1;
-} nkro_t;
-#endif
-
 #define TRANSPORT_WIRELESS (TRANSPORT_BLUETOOTH | TRANSPORT_P2P4)
 
 void        set_transport(transport_t new_transport);
 transport_t get_transport(void);
 
-void usb_power_connect(void);
-void usb_power_disconnect(void);
-void usb_transport_enable(bool enable);
 void usb_remote_wakeup(void);
-uint8_t eeprom_read_transport(void);
-void eeprom_update_transport(uint8_t val);
-

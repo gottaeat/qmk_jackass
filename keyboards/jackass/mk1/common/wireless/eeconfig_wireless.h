@@ -16,15 +16,5 @@
 
 #pragma once
 
-#ifdef KEYCOMBO_CONN_SWITCH_ENABLE
-#    define EECONFIG_SIZE_TRANSPORT 1
-#else
-#    define EECONFIG_SIZE_TRANSPORT 0
-#endif
-
-// EECONFIG_SIZE_TRANSPORT = sizeof(backlit_disable_time) + sizeof (connected_idle_time) = 4
-#define EECONFIG_SIZE_WIRELESS_CONFIG    (4 + EECONFIG_SIZE_TRANSPORT)
-
-#ifdef KEYCOMBO_CONN_SWITCH_ENABLE
-#    define OFFSET_TRANSPORT    4
-#endif
+// sizeof(connected_idle_time)
+#define EECONFIG_SIZE_WIRELESS_CONFIG 2

@@ -16,18 +16,15 @@
 
 #pragma once
 
-#define EXTERNAL_EEPROM_BYTE_COUNT 1024 //
+#define EXTERNAL_EEPROM_BYTE_COUNT 1024
 #define EXTERNAL_EEPROM_PAGE_SIZE 32
 #define EXTERNAL_EEPROM_ADDRESS_SIZE 2
 #define EXTERNAL_EEPROM_WRITE_TIME 5
 #define EXTERNAL_EEPROM_I2C_BASE_ADDRESS 0b10100010
 
-#ifndef EXTERNAL_EEPROM_I2C_ADDRESS
-#    define EXTERNAL_EEPROM_I2C_ADDRESS(loc) (EXTERNAL_EEPROM_I2C_BASE_ADDRESS)
-#endif
+#define EXTERNAL_EEPROM_I2C_ADDRESS(loc) (EXTERNAL_EEPROM_I2C_BASE_ADDRESS)
 
 void he_eeprom_driver_init(void);
 void he_eeprom_driver_erase(void);
 void he_eeprom_read_block(void *buf, const void *addr, size_t len);
 void he_eeprom_write_block(const void *buf, void *addr, size_t len);
-

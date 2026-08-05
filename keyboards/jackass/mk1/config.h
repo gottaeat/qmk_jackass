@@ -29,69 +29,38 @@
 #define ANALOG_MATRIX_POWER_ENABLE_LEVEL 1
 #define ANALOG_MATRIX_WAKEUP_PIN C5
 
-/* Joystick Configuration */
-#ifdef JOYSTICK_ENABLE
-#    define JOYSTICK_AXIS_COUNT 6
-#    define JOYSTICK_BUTTON_COUNT 16
-#endif
-
 /* SPI Configuration */
-#if defined(RGB_MATRIX_ENABLE) || defined(LK_WIRELESS_ENABLE)
-#    define SPI_DRIVER SPID1
-#    define SPI_SCK_PIN A5
-#    define SPI_MISO_PIN A6
-#    define SPI_MOSI_PIN A7
-#endif
+#define SPI_DRIVER SPID1
+#define SPI_SCK_PIN A5
+#define SPI_MISO_PIN A6
+#define SPI_MOSI_PIN A7
 
 /* SNLED27351 Driver Configuration */
-#if defined(RGB_MATRIX_ENABLE)
-#    define SNLED27351_SELECT_PINS \
-        { B8, B9 }
-#    define SNLED27351_SDB_PIN B7
-#    define SNLED27351_PHASE_CHANNEL SNLED27351_SCAN_PHASE_9_CHANNEL
-#    define SNLED27351_SPI_DIVISOR 16
-#endif
+#define SNLED27351_SELECT_PINS {B8, B9}
+#define SNLED27351_SDB_PIN B7
+#define SNLED27351_PHASE_CHANNEL SNLED27351_SCAN_PHASE_9_CHANNEL
+#define SNLED27351_SPI_DIVISOR 16
 
 /* Wireless Configuration */
-#ifdef LK_WIRELESS_ENABLE
-/* Hardware Configuration */
-#    define SPI_SCK_PIN A5
-#    define SPI_MISO_PIN A6
-#    define SPI_MOSI_PIN A7
+#define P24G_MODE_SELECT_PIN A9
+#define BT_MODE_SELECT_PIN A10
+#define LKBT51_RESET_PIN C4
+#define WIRELESS_TO_MCU_INT_PIN B1
+#define MCU_TO_WIRELESS_INT_PIN A4
+#define USB_POWER_SENSE_PIN B0
+#define USB_POWER_CONNECTED_LEVEL 0
+#define BAT_CHARGING_PIN B13
+#define BAT_CHARGING_LEVEL 0
+#define BAT_LEVEL_LED_LIST {17, 18, 19, 20, 21, 22, 23, 24, 25, 26}
 
-#    define P24G_MODE_SELECT_PIN A9
-#    define BT_MODE_SELECT_PIN A10
+/* LED Current Configuration */
+#define SNLED27351_CURRENT_TUNE {0x2C, 0x2C, 0x2C, 0x2C, 0x2C, 0x2C, 0x2C, 0x2C, 0x2C, 0x2C, 0x2C, 0x2C}
 
-#    define LKBT51_RESET_PIN C4
-#    define WIRELESS_TO_MCU_INT_PIN B1
-#    define MCU_TO_WIRELESS_INT_PIN A4
+/* RGB Matrix Configuration */
+#define RGB_MATRIX_LED_COUNT 84
+#define RGB_MATRIX_DEFAULT_MODE RGB_MATRIX_SOLID_COLOR
+#define RGB_MATRIX_DEFAULT_SAT 0
+#define RGB_MATRIX_DISABLE_SHARED_KEYCODES
 
-#    define USB_POWER_SENSE_PIN B0
-#    define USB_POWER_CONNECTED_LEVEL 0
-
-#    define BAT_CHARGING_PIN B13
-#    define BAT_CHARGING_LEVEL 0
-
-#    if defined(RGB_MATRIX_ENABLE)
-#        define BT_INDCATION_LED_MATRIX_LIST \
-            { 17, 18, 19 }
-#        define P24G_INDICATION_LED_INDEX 20
-
-#        define BAT_LEVEL_LED_LIST \
-            { 17, 18, 19, 20, 21, 22, 23, 24, 25, 26 }
-
-/* Reinit LED driver on tranport changed */
-#        define LED_DRIVER_REINIT_ON_TRANSPORT_CHANGE
-#    endif
-
-/* Keep USB connection in wireless mode */
-#    define KEEP_USB_CONNECTION_IN_WIRELESS_MODE
-
-/* Enable wireless NKRO */
-#    define WIRELESS_NKRO_ENABLE
-#endif
-
-/* Factory Test Keys */
-#define FN_KEY_1 MO(1)
-#define FN_KEY_2 MO(3)
-#define FN_BL_TRIG_KEY KC_END
+/* Indications */
+#define CAPS_LOCK_INDEX 46

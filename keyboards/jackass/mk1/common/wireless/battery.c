@@ -18,131 +18,43 @@
 #include "wireless.h"
 #include "battery.h"
 #include "transport.h"
-#if defined(LK_WIRELESS_ENABLE)
-#    include "lkbt51.h"
-#elif defined(KC_BLUETOOTH_ENABLE)
-#    include "ckbt51.h"
-#endif
+#include "lkbt51.h"
 #include "lpm.h"
 #include "indicator.h"
 #include "rtc_timer.h"
-#include "analog.h"
-#include "backlit_indicator.h"
 #include "config.h"
+#include "snled27351-spi.h"
 
-#define BATTERY_EMPTY_COUNT 10
 #define CRITICAL_LOW_COUNT 20
 
-/* Battery voltage resistive voltage divider setting of MCU */
-#ifndef RVD_R1
-#    define RVD_R1 10 // Upper side resitor value (uint: KΩ)
-#endif
-#ifndef RVD_R2
-#    define RVD_R2 10 // Lower side resitor value (uint: KΩ)
-#endif
-
-/* Battery voltage resistive voltage divider setting of Bluetooth */
-#ifndef LKBT51_RVD_R1
-#    define LKBT51_RVD_R1 560
-#endif
-#ifndef LKBT51_RVD_R2
-#    define LKBT51_RVD_R2 499
-#endif
-
-#ifndef VOLTAGE_TRIM_LED_MATRIX
-#    define VOLTAGE_TRIM_LED_MATRIX 30
-#endif
-
-#ifndef VOLTAGE_TRIM_RGB_MATRIX
-#    define VOLTAGE_TRIM_RGB_MATRIX 60
-#endif
+#define LKBT51_RVD_R1 560
+#define LKBT51_RVD_R2 499
+#define VOLTAGE_TRIM_RGB_MATRIX 60
 
 static uint32_t bat_monitor_timer_buffer = 0;
 static uint16_t voltage                  = FULL_VOLTAGE_VALUE;
-static uint8_t  bat_empty                = 0;
 static uint8_t  critical_low             = 0;
-static uint8_t  bat_state;
-static uint8_t  power_on_sample = 0;
+static uint8_t  power_on_sample          = 0;
 
 void battery_init(void) {
-    bat_state = BAT_NOT_CHARGING;
-#if defined(BAT_CHARGING_PIN)
-#    if (BAT_CHARGING_LEVEL == 0)
     palSetLineMode(BAT_CHARGING_PIN, PAL_MODE_INPUT_PULLUP);
-#    else
-    palSetLineMode(BAT_CHARGING_PIN, PAL_MODE_INPUT_PULLDOWN);
-#    endif
-#endif
-
-#ifdef BAT_ADC_ENABLE_PIN
-    palSetLineMode(BAT_ADC_ENABLE_PIN, PAL_MODE_OUTPUT_PUSHPULL);
-    gpio_write_pin(BAT_ADC_ENABLE_PIN, 1);
-#endif
-#ifdef BAT_ADC_PIN
-    palSetLineMode(BAT_ADC_PIN, PAL_MODE_INPUT_ANALOG);
-#endif
 }
 
-void battery_stop(void) {
-#if (HAL_USE_ADC)
-#    ifdef BAT_ADC_ENABLE_PIN
-    gpio_write_pin(BAT_ADC_ENABLE_PIN, 0);
-#    endif
-#    ifdef BAT_ADC_PIN
-    palSetLineMode(BAT_ADC_PIN, PAL_MODE_INPUT_ANALOG);
-    analog_stop(BAT_ADC_PIN);
-#    endif
-#endif
-}
-
-__attribute__((weak)) void battery_measure(void) {
-#if defined(LK_WIRELESS_ENABLE)
+static void battery_measure(void) {
     lkbt51_read_state_reg(0x05, 0x02);
-#elif defined(KC_BLUETOOTH_ENABLE)
-    ckbt51_read_state_reg(0x05, 0x02);
-#endif
 }
 
 /* Calculate the voltage */
-__attribute__((weak)) void battery_calculate_voltage(bool src_bt, uint16_t value) {
-    uint16_t voltage;
+void battery_calculate_voltage(uint16_t value) {
+    uint16_t measured_voltage = ((uint32_t)value) * (LKBT51_RVD_R1 + LKBT51_RVD_R2) / LKBT51_RVD_R2;
 
-#if defined(LK_WIRELESS_ENABLE)
-    if (src_bt)
-        voltage = ((uint32_t)value) * (LKBT51_RVD_R1 + LKBT51_RVD_R2) / LKBT51_RVD_R2;
-    else
-        voltage = (uint32_t)value * 3300 / 1024 * (RVD_R1 + RVD_R2) / RVD_R2;
-#elif defined(KC_BLUETOOTH_ENABLE)
-    voltage = ((uint32_t)value) * 2246 / 1000;
-#else
-    return;
-#endif
-
-#ifdef LED_MATRIX_ENABLE
-    if (led_matrix_is_enabled()) {
-        /* We assumpt it is linear relationship*/
-        uint32_t compensation = (VOLTAGE_TRIM_LED_MATRIX * led_matrix_driver.get_total_duty_ratio());
-        voltage += compensation;
-    }
-#endif
-#ifdef RGB_MATRIX_ENABLE
     if (rgb_matrix_is_enabled()) {
-
-        /* We assumpt it is linear relationship*/
-        uint32_t compensation = (VOLTAGE_TRIM_LED_MATRIX * rgb_matrix_driver.get_total_duty_ratio());
-        voltage += compensation;
+        /* Account for LED load while measuring battery voltage. */
+        uint32_t compensation = VOLTAGE_TRIM_RGB_MATRIX * snled27351_get_total_duty_ratio();
+        measured_voltage += compensation;
     }
-#endif
 
-    battery_set_voltage(voltage);
-}
-
-void battery_set_voltage(uint16_t value) {
-    voltage = value;
-}
-
-uint16_t battery_get_voltage(void) {
-    return voltage;
+    voltage = measured_voltage;
 }
 
 uint8_t battery_get_percentage(void) {
@@ -158,26 +70,11 @@ uint8_t battery_get_percentage(void) {
         return 0;
 }
 
-bool battery_is_empty(void) {
-    return bat_empty > BATTERY_EMPTY_COUNT;
-}
-
 bool battery_is_critical_low(void) {
     return critical_low > CRITICAL_LOW_COUNT;
 }
 
-void battery_check_empty(void) {
-    if (voltage < EMPTY_VOLTAGE_VALUE) {
-        if (bat_empty <= BATTERY_EMPTY_COUNT) {
-            if (++bat_empty > BATTERY_EMPTY_COUNT) {
-                indicator_battery_low_enable(true);
-                power_on_sample = VOLTAGE_POWER_ON_MEASURE_COUNT;
-            }
-        }
-    }
-}
-
-void battery_check_critical_low(void) {
+static void battery_check_critical_low(void) {
     if (voltage < SHUTDOWN_VOLTAGE_VALUE) {
         if (critical_low <= CRITICAL_LOW_COUNT) {
             if (++critical_low > CRITICAL_LOW_COUNT) wireless_low_battery_shutdown();
@@ -187,7 +84,7 @@ void battery_check_critical_low(void) {
     }
 }
 
-bool battery_power_on_sample(void) {
+static bool battery_power_on_sample(void) {
     return power_on_sample < VOLTAGE_POWER_ON_MEASURE_COUNT;
 }
 
@@ -198,23 +95,14 @@ void battery_timer_reset(void) {
 void battery_task(void) {
     uint32_t t = rtc_timer_elapsed_ms(bat_monitor_timer_buffer);
     if ((get_transport() & TRANSPORT_WIRELESS) && (wireless_get_state() == WT_CONNECTED || battery_power_on_sample())) {
-#if defined(BAT_CHARGING_PIN)
         if (usb_power_connected() && t > VOLTAGE_MEASURE_INTERVAL) {
             if (gpio_read_pin(BAT_CHARGING_PIN) == BAT_CHARGING_LEVEL)
                 lkbt51_update_bat_state(BAT_CHARGING);
             else
                 lkbt51_update_bat_state(BAT_FULL_CHARGED);
         }
-#endif
 
-        if ((battery_power_on_sample()
-#if defined(LED_MATRIX_ENABLE) || defined(RGB_MATRIX_ENABLE)
-             && !indicator_is_enabled()
-#endif
-             && t > BACKLIGHT_OFF_VOLTAGE_MEASURE_INTERVAL) ||
-            t > VOLTAGE_MEASURE_INTERVAL) {
-
-            battery_check_empty();
+        if ((battery_power_on_sample() && !rgb_matrix_is_enabled() && t > BACKLIGHT_OFF_VOLTAGE_MEASURE_INTERVAL) || t > VOLTAGE_MEASURE_INTERVAL) {
             battery_check_critical_low();
 
             bat_monitor_timer_buffer = rtc_timer_read_ms();
@@ -228,9 +116,7 @@ void battery_task(void) {
         }
     }
 
-    if ((bat_empty || critical_low) && usb_power_connected()) {
-        bat_empty    = false;
+    if (critical_low && usb_power_connected()) {
         critical_low = false;
-        indicator_battery_low_enable(false);
     }
 }

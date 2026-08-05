@@ -15,18 +15,9 @@
  */
 
 #include "stdint.h"
-#ifdef VIA_ENABLE
-#    include "via.h"
-#endif
 #include "quantum_keycodes.h"
 
 void wireless_common_init(void);
-#ifdef LK_WIRELESS_ENABLE
-void lkbt51_param_init(void);
-#endif
-#if defined(KC_BLUETOOTH_ENABLE)
-void ckbt51_param_init(void);
-#endif
 
 bool process_record_keychron_wireless(uint16_t keycode, keyrecord_t *record);
 void keychron_wireless_common_task(void);

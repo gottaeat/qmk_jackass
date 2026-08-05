@@ -1,0 +1,14 @@
+name: qmk-jackass
+
+services:
+  qmk:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: qmk-jackass
+    working_dir: /qmk_firmware
+    volumes:
+      - .:/qmk_firmware
+    command: ["sleep", "infinity"]
+    init: true
+    tty: true

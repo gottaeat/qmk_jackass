@@ -17,17 +17,10 @@
 #include "quantum.h"
 #include "wireless.h"
 #include "transport.h"
-#include "factory_test.h"
-#include "keychron_task.h"
-
-__attribute__((weak)) void wireless_pre_task(void) {}
-__attribute__((weak)) void wireless_post_task(void) {}
 
 bool wireless_tasks(void) {
     wireless_pre_task();
     wireless_task();
-    wireless_post_task();
-
     /* usb_remote_wakeup() should be invoked last so that we have chance
      * to switch to wireless after start-up when usb is not connected
      */

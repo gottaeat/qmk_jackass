@@ -19,47 +19,12 @@
 #include "wireless.h"
 #include "wireless_event_type.h"
 #include "battery.h"
-#include "raw_hid.h"
 #include "report_buffer.h"
-#include "factory_test.h"
 
-extern void factory_test_send(bool usb, uint8_t* payload, uint8_t length);
-
-#ifndef RAW_EPSIZE
-#    define RAW_EPSIZE 32
-#endif
-
-#ifndef SPI_SCK_PIN
-#    define SPI_SCK_PIN A5
-#endif
-#ifndef SPI_MISO_PIN
-#    define SPI_MISO_PIN A6
-#endif
-#ifndef SPI_MOSI_PIN
-#    define SPI_MOSI_PIN A7
-#endif
-
-#ifndef SPI_CLK_PAL_MODE
-#    define SPI_CLK_PAL_MODE 5
-#endif
-#ifndef SPI_MISO_PAL_MODE
-#    define SPI_MISO_PAL_MODE 5
-#endif
-#ifndef SPI_MOSI_PAL_MODE
-#    define SPI_MOSI_PAL_MODE 5
-#endif
-
-#ifndef WIRELESS_TO_MCU_INT_PIN
-#    error "WIRELESS_TO_MCU_INT_PIN is not defined"
-#endif
-
-#ifndef LKBT51_TX_RETRY_COUNT
-#    define LKBT51_TX_RETRY_COUNT 3
-#endif
-
-#ifndef LKBT51_COMM_TIMEOUT_MS
-#    define LKBT51_COMM_TIMEOUT_MS 2000
-#endif
+#define SPI_CLK_PAL_MODE 5
+#define SPI_MISO_PAL_MODE 5
+#define SPI_MOSI_PAL_MODE 5
+#define LKBT51_COMM_TIMEOUT_MS 2000
 
 // clang-format off
 enum {
@@ -68,62 +33,27 @@ enum {
     LKBT51_CMD_SEND_KB_NKRO  = 0x12,
     LKBT51_CMD_SEND_CONSUMER = 0x13,
     LKBT51_CMD_SEND_SYSTEM   = 0x14,
-    LKBT51_CMD_SEND_FN       = 0x15, // Not used currently
     LKBT51_CMD_SEND_MOUSE    = 0x16,
-    LKBT51_CMD_SEND_BOOT_KB  = 0x17,
-    LKBT51_CMD_SEND_JOYSTICK = 0x18,
-    LKBT51_CMD_SEND_XINPUT   = 0x19,
     /* Bluetooth connections */
     LKBT51_CMD_PAIRING        = 0x21,
     LKBT51_CMD_CONNECT        = 0x22,
     LKBT51_CMD_DISCONNECT     = 0x23,
-    LKBT51_CMD_SWITCH_HOST    = 0x24,
     LKBT51_CMD_READ_STATE_REG = 0x25,
-    LKBT51_CMD_XINPUT         = 0x26,
     /* Battery */
-    LKBT51_CMD_BATTERY_MANAGE = 0x31,
     LKBT51_CMD_UPDATE_BAT_LVL = 0x32,
     LKBT51_CMD_UPDATE_BAT_STATE = 0x33,
     /* Set/get parameters */
-    LKBT51_CMD_GET_MODULE_INFO = 0x40,
     LKBT51_CMD_SET_CONFIG      = 0x41,
-    LKBT51_CMD_GET_CONFIG      = 0x42,
-    LKBT51_CMD_SET_BDA         = 0x43,
-    LKBT51_CMD_GET_BDA         = 0x44,
     LKBT51_CMD_SET_NAME        = 0x45,
-    LKBT51_CMD_GET_NAME        = 0x46,
-    LKBT51_CMD_WRTE_CSTM_DATA  = 0x49,
-    LKBT51_CMD_SET_MS_SWIFT_PAIR_NAME = 0x4A,
-    /* DFU */
-    LKBT51_CMD_GET_DFU_VER      = 0x60,
-    LKBT51_CMD_HAND_SHAKE_TOKEN = 0x61,
-    LKBT51_CMD_START_DFU        = 0x62,
-    LKBT51_CMD_SEND_FW_DATA     = 0x63,
-    LKBT51_CMD_VERIFY_CRC32     = 0x64,
-    LKBT51_CMD_SWITCH_FW        = 0x65,
-    /* Factory test */
-    LKBT51_CMD_FACTORY_RESET = 0x71,
-    LKBT51_CMD_IO_TEST       = 0x72,
-    LKBT51_CMD_RADIO_TEST    = 0x73,
-    /* Wireless Raw HID */
-    LKBT51_CMD_RAW_HID_INIT  = 0x91,
-    LKBT51_CMD_RAW_HID_RX    = 0x92,
-    LKBT51_CMD_RAW_HID_TX    = 0x93,
     /* Event */
     LKBT51_EVT_LKBT51_CMD_RECEIVED = 0xA1,
-    LKBT51_EVT_OTA_RSP             = 0xA3,
     LKBT51_CONNECTION_EVT_ACK      = 0xA4,
 };
 
 enum {
     LKBT51_EVT_ACK           = 0xA1,
-    LKBT51_EVT_QUERY_RSP     = 0xA2,
     LKBT51_EVT_RESET         = 0xB0,
-    LKBT51_EVT_LE_CONNECTION = 0xB1,
-    LKBT51_EVT_HOST_TYPE     = 0xB2,
-    LKBT51_EVT_CONNECTION    = 0xB3,
     LKBT51_EVT_HID_EVENT     = 0xB4,
-    LKBT51_EVT_BATTERY       = 0xB5,
 };
 
 enum {
@@ -149,22 +79,17 @@ enum{
     LK_EVT_MSK_BATT = 0x01 << 2,
     LK_EVT_MSK_RESET = 0x01 << 3,
     LK_EVT_MSK_RPT_INTERVAL = 0x01 << 4,
-    LK_EVT_MSK_XINPUT = 0x01 << 6,
     LK_EVT_MSK_MD = 0x01 << 7,
 };
 
 // clang-format on
 
 static uint8_t  payload[PACKET_MAX_LEN];
-static uint8_t  reg_offset          = 0xFF;
 static uint8_t  expect_len          = 22;
 static uint16_t connection_interval = 1;
 static uint32_t wake_time;
-static uint32_t factory_reset_timer = 0;
 
-#ifdef LKBT51_RESET_PIN
 static volatile uint32_t lkbt51_last_comm_time = 0;
-#endif
 
 // clang-format off
 wt_func_t wireless_transport = {
@@ -177,21 +102,11 @@ wt_func_t wireless_transport = {
     lkbt51_send_consumer,
     lkbt51_send_system,
     lkbt51_send_mouse,
-#ifdef JOYSTICK_ENABLE
-    lkbt51_send_joysticks,
-#endif
-#ifdef XINPUT_ENABLE
-    lkbt51_send_xinput,
-#endif
-#ifdef RAW_ENABLE
-    lkbt51_send_raw_hid,
-#endif
     lkbt51_update_bat_lvl,
     lkbt51_task
 };
 // clang-format on
 
-#if defined(MCU_STM32)
 /* Init SPI */
 const SPIConfig spicfg = {
     .circular = false,
@@ -203,30 +118,15 @@ const SPIConfig spicfg = {
     .cr1      = SPI_CR1_MSTR | SPI_CR1_BR_1 | SPI_CR1_BR_0,
     .cr2      = 0U,
 };
-#endif
-
-#if defined(WB32F3G71xx)
-/* Init SPI */
-const SPIConfig spicfg = {
-    .ssport                = PAL_PORT(MCU_TO_WIRELESS_INT_PIN),
-    .sspad                 = PAL_PAD(MCU_TO_WIRELESS_INT_PIN),
-    .SPI_CPOL              = 0U,
-    .SPI_CPHA              = 0U,
-    .SPI_BaudRatePrescaler = 32U,
-};
-#endif
 
 void lkbt51_init(bool wakeup_from_low_power_mode) {
-#ifdef LKBT51_RESET_PIN
     if (!wakeup_from_low_power_mode) {
         gpio_set_pin_output_push_pull(LKBT51_RESET_PIN);
         gpio_write_pin_low(LKBT51_RESET_PIN);
         wait_ms(1);
         gpio_write_pin_high(LKBT51_RESET_PIN);
     }
-#endif
 
-#if (HAL_USE_SPI == TRUE)
     palSetLineMode(SPI_SCK_PIN, PAL_MODE_ALTERNATE(SPI_CLK_PAL_MODE));
     palSetLineMode(SPI_MISO_PIN, PAL_MODE_ALTERNATE(SPI_MISO_PAL_MODE));
     palSetLineMode(SPI_MOSI_PIN, PAL_MODE_ALTERNATE(SPI_MOSI_PAL_MODE));
@@ -239,7 +139,6 @@ void lkbt51_init(bool wakeup_from_low_power_mode) {
 
         spiInit();
     }
-#endif
 
     gpio_set_pin_output_push_pull(MCU_TO_WIRELESS_INT_PIN);
     gpio_write_pin_high(MCU_TO_WIRELESS_INT_PIN);
@@ -258,40 +157,13 @@ static inline void lkbt51_wake(void) {
     }
 }
 
-void lkbt51_send_protocol_ver(uint16_t ver) {
-    uint8_t pkt[PACKET_MAX_LEN] = {0};
-    memset(pkt, 0, PACKET_MAX_LEN);
-
-    uint8_t i = 0;
-
-    pkt[i++] = 0x84;
-    pkt[i++] = 0x7e;
-    pkt[i++] = 0x00;
-    pkt[i++] = 0x00;
-    pkt[i++] = 0xAA;
-    pkt[i++] = 0x54;
-    pkt[i++] = ver & 0xFF;
-    pkt[i++] = (ver >> 8) & 0xFF;
-    pkt[i++] = (uint8_t)(~0x54);
-    pkt[i++] = (uint8_t)(~0xAA);
-
-#if HAL_USE_SPI
-    expect_len = 10;
-    spiStart(&WT_DRIVER, &spicfg);
-    spiSelect(&WT_DRIVER);
-    spiSend(&WT_DRIVER, i, pkt);
-    spiUnselectI(&WT_DRIVER);
-    spiStop(&WT_DRIVER);
-#endif
-}
-
-void lkbt51_send_cmd(uint8_t* payload, uint8_t len, bool ack_enable, bool retry) {
+static void lkbt51_send_cmd(uint8_t* payload, uint8_t len, bool ack_enable) {
     static uint8_t sn = 0;
     uint8_t        i;
     uint8_t        pkt[PACKET_MAX_LEN] = {0};
     memset(pkt, 0, PACKET_MAX_LEN);
 
-    if (!retry) ++sn;
+    ++sn;
     if (sn == 0) ++sn;
 
     uint16_t checksum = 0;
@@ -314,21 +186,16 @@ void lkbt51_send_cmd(uint8_t* payload, uint8_t len, bool ack_enable, bool retry)
     pkt[i++] = checksum & 0xFF;
     pkt[i++] = (checksum >> 8) & 0xFF;
 
-#if HAL_USE_SPI
-    if ((payload[0] & 0xF0) == 0x60)
-        expect_len = 64;
-    else
-        expect_len = 64;
+    expect_len = 64;
 
     spiStart(&WT_DRIVER, &spicfg);
     spiSelect(&WT_DRIVER);
     spiSend(&WT_DRIVER, i, pkt);
     spiUnselectI(&WT_DRIVER);
     spiStop(&WT_DRIVER);
-#endif
 }
 
-void lkbt51_read(uint8_t* payload, uint8_t len) {
+static void lkbt51_read(uint8_t* payload, uint8_t len) {
     uint8_t i;
     uint8_t pkt[PACKET_MAX_LEN] = {0};
     memset(pkt, 0, PACKET_MAX_LEN);
@@ -341,13 +208,11 @@ void lkbt51_read(uint8_t* payload, uint8_t len) {
 
     i += len;
 
-#if HAL_USE_SPI
     spiStart(&WT_DRIVER, &spicfg);
     spiSelect(&WT_DRIVER);
     spiExchange(&WT_DRIVER, i, pkt, payload);
     spiUnselect(&WT_DRIVER);
     spiStop(&WT_DRIVER);
-#endif
 }
 
 void lkbt51_send_keyboard(uint8_t* report) {
@@ -358,12 +223,10 @@ void lkbt51_send_keyboard(uint8_t* report) {
     memcpy(payload + i, report, 8);
     i += 8;
 
-    lkbt51_send_cmd(payload, i, true, false);
-#ifdef LKBT51_RESET_PIN
+    lkbt51_send_cmd(payload, i, true);
     if (!lkbt51_last_comm_time) {
         lkbt51_last_comm_time = timer_read32();
     }
-#endif
 }
 
 void lkbt51_send_nkro(uint8_t* report) {
@@ -374,12 +237,10 @@ void lkbt51_send_nkro(uint8_t* report) {
     memcpy(payload + i, report, 20); // NKRO report lenght is limited to 20 bytes
     i += 20;
 
-    lkbt51_send_cmd(payload, i, true, false);
-#ifdef LKBT51_RESET_PIN
+    lkbt51_send_cmd(payload, i, true);
     if (!lkbt51_last_comm_time) {
         lkbt51_last_comm_time = timer_read32();
     }
-#endif
 }
 
 void lkbt51_send_consumer(uint16_t report) {
@@ -391,12 +252,10 @@ void lkbt51_send_consumer(uint16_t report) {
     payload[i++] = ((report) >> 8) & 0xFF;
     i += 4; // QMK doesn't send multiple consumer reports, just skip 2nd and 3rd consumer reports
 
-    lkbt51_send_cmd(payload, i, true, false);
-#ifdef LKBT51_RESET_PIN
+    lkbt51_send_cmd(payload, i, true);
     if (!lkbt51_last_comm_time) {
         lkbt51_last_comm_time = timer_read32();
     }
-#endif
 }
 
 void lkbt51_send_system(uint16_t report) {
@@ -416,12 +275,10 @@ void lkbt51_send_system(uint16_t report) {
         payload[i++] = 0x08;
     }
 
-    lkbt51_send_cmd(payload, i, true, false);
-#ifdef LKBT51_RESET_PIN
+    lkbt51_send_cmd(payload, i, true);
     if (!lkbt51_last_comm_time) {
         lkbt51_last_comm_time = timer_read32();
     }
-#endif
 }
 
 void lkbt51_send_mouse(uint8_t* report) {
@@ -437,76 +294,34 @@ void lkbt51_send_mouse(uint8_t* report) {
     payload[i++] = report[4];                        // V wheel
     payload[i++] = report[5];                        // H wheel
 
-    lkbt51_send_cmd(payload, i, false, false);
-}
-
-void lkbt51_send_joysticks(uint8_t* report) {
-    uint8_t i = 0;
-    memset(payload, 0, PACKET_MAX_LEN);
-
-    payload[i++] = LKBT51_CMD_SEND_JOYSTICK;
-    memcpy(payload + i, report, 10);
-    i += 10;
-
-    lkbt51_send_cmd(payload, i, false, false);
-}
-
-void lkbt51_send_xinput(uint8_t* report) {
-    uint8_t i = 0;
-    memset(payload, 0, PACKET_MAX_LEN);
-
-    payload[i++] = LKBT51_CMD_SEND_XINPUT;
-    memcpy(payload + i, report, 20);
-    i += 20;
-
-    lkbt51_send_cmd(payload, i, false, false);
-}
-
-void lkbt51_send_raw_hid(uint8_t* data, uint8_t len) {
-    uint8_t i = 0;
-    memset(payload, 0, PACKET_MAX_LEN);
-
-    payload[i++] = LKBT51_CMD_RAW_HID_TX;
-    memcpy(payload + i, data, len);
-    i += len;
-    lkbt51_send_cmd(payload, i, false, false);
+    lkbt51_send_cmd(payload, i, false);
 }
 
 /* Send ack to connection event, wireless module will retry 2 times if no ack received */
-void lkbt51_send_conn_evt_ack(void) {
+static void lkbt51_send_conn_evt_ack(void) {
     uint8_t i = 0;
     memset(payload, 0, PACKET_MAX_LEN);
 
     payload[i++] = LKBT51_CONNECTION_EVT_ACK;
 
-    lkbt51_send_cmd(payload, i, false, false);
+    lkbt51_send_cmd(payload, i, false);
 }
 
 void lkbt51_become_discoverable(uint8_t host_idx, void* param) {
     uint8_t i = 0;
+    (void)param;
     memset(payload, 0, PACKET_MAX_LEN);
-
-    pairing_param_t default_pairing_param = {0, 0, PAIRING_MODE_LESC_OR_SSP, BT_MODE_CLASSIC, 0, NULL};
-
-    if (param == NULL) {
-        param = &default_pairing_param;
-    }
-    pairing_param_t* p = (pairing_param_t*)param;
 
     payload[i++] = LKBT51_CMD_PAIRING; // Cmd type
     payload[i++] = host_idx;           // Host Index
-    payload[i++] = p->timeout & 0xFF;  // Timeout
-    payload[i++] = (p->timeout >> 8) & 0xFF;
-    payload[i++] = p->pairingMode;
-    payload[i++] = p->BRorLE;  // BR/LE
-    payload[i++] = p->txPower; // LE TX POWER
-    if (p->leName) {
-        memcpy(&payload[i], p->leName, strlen(p->leName));
-        i += strlen(p->leName);
-    }
+    payload[i++] = 0;                  // Default timeout
+    payload[i++] = 0;
+    payload[i++] = 3; // LESC or SSP
+    payload[i++] = 1; // Bluetooth Classic
+    payload[i++] = 0; // Default transmit power
 
     lkbt51_wake();
-    lkbt51_send_cmd(payload, i, true, false);
+    lkbt51_send_cmd(payload, i, true);
 }
 
 /* Timeout : 2 ~ 255 seconds */
@@ -520,12 +335,10 @@ void lkbt51_connect(uint8_t hostIndex, uint16_t timeout) {
     payload[i++] = (timeout >> 8) & 0xFF;
 
     lkbt51_wake();
-    lkbt51_send_cmd(payload, i, true, false);
-#ifdef LKBT51_RESET_PIN
+    lkbt51_send_cmd(payload, i, true);
     if (!lkbt51_last_comm_time) {
         lkbt51_last_comm_time = timer_read32();
     }
-#endif
 }
 
 void lkbt51_disconnect(void) {
@@ -541,17 +354,7 @@ void lkbt51_disconnect(void) {
     // spiUnselect(&WT_DRIVER);
     wait_ms(70);
 
-    lkbt51_send_cmd(payload, i, true, false);
-}
-
-void lkbt51_switch_host(uint8_t hostIndex) {
-    uint8_t i = 0;
-    memset(payload, 0, PACKET_MAX_LEN);
-
-    payload[i++] = LKBT51_CMD_SWITCH_HOST;
-    payload[i++] = hostIndex;
-
-    lkbt51_send_cmd(payload, i, true, false);
+    lkbt51_send_cmd(payload, i, true);
 }
 
 void lkbt51_read_state_reg(uint8_t reg, uint8_t len) {
@@ -559,21 +362,11 @@ void lkbt51_read_state_reg(uint8_t reg, uint8_t len) {
     memset(payload, 0, PACKET_MAX_LEN);
 
     payload[i++] = LKBT51_CMD_READ_STATE_REG;
-    payload[i++] = reg_offset = reg;
-    payload[i++]              = len;
+    payload[i++] = reg;
+    payload[i++] = len;
 
     // TODO
-    lkbt51_send_cmd(payload, i, false, false);
-}
-
-void lkbt51_set_xinput_mode(bool enable) {
-    uint8_t i = 0;
-    memset(payload, 0, PACKET_MAX_LEN);
-
-    payload[i++] = LKBT51_CMD_XINPUT;
-    payload[i++] = enable;
-
-    lkbt51_send_cmd(payload, i, false, false);
+    lkbt51_send_cmd(payload, i, false);
 }
 
 void lkbt51_update_bat_lvl(uint8_t bat_lvl) {
@@ -582,7 +375,7 @@ void lkbt51_update_bat_lvl(uint8_t bat_lvl) {
 
     payload[i++] = LKBT51_CMD_UPDATE_BAT_LVL;
     payload[i++] = bat_lvl;
-    lkbt51_send_cmd(payload, i, false, false);
+    lkbt51_send_cmd(payload, i, false);
 }
 
 void lkbt51_update_bat_state(uint8_t bat_state) {
@@ -591,15 +384,7 @@ void lkbt51_update_bat_state(uint8_t bat_state) {
 
     payload[i++] = LKBT51_CMD_UPDATE_BAT_STATE;
     payload[i++] = bat_state;
-    lkbt51_send_cmd(payload, i, false, false);
-}
-
-void lkbt51_get_info(module_info_t* info) {
-    uint8_t i = 0;
-    memset(payload, 0, PACKET_MAX_LEN);
-
-    payload[i++] = LKBT51_CMD_GET_MODULE_INFO;
-    lkbt51_send_cmd(payload, i, false, false);
+    lkbt51_send_cmd(payload, i, false);
 }
 
 void lkbt51_set_param(module_param_t* param) {
@@ -610,16 +395,7 @@ void lkbt51_set_param(module_param_t* param) {
     memcpy(payload + i, param, sizeof(module_param_t));
     i += sizeof(module_param_t);
 
-    lkbt51_send_cmd(payload, i, false, false);
-}
-
-void lkbt51_get_param(module_param_t* param) {
-    uint8_t i = 0;
-    memset(payload, 0, PACKET_MAX_LEN);
-
-    payload[i++] = LKBT51_CMD_GET_CONFIG;
-
-    lkbt51_send_cmd(payload, i, false, false);
+    lkbt51_send_cmd(payload, i, false);
 }
 
 void lkbt51_set_local_name(const char* name) {
@@ -630,181 +406,10 @@ void lkbt51_set_local_name(const char* name) {
     payload[i++] = LKBT51_CMD_SET_NAME;
     memcpy(payload + i, name, len);
     i += len;
-    lkbt51_send_cmd(payload, i, false, false);
+    lkbt51_send_cmd(payload, i, false);
 }
 
-void lkbt51_get_local_name(void) {
-    uint8_t i = 0;
-    memset(payload, 0, PACKET_MAX_LEN);
-
-    payload[i++] = LKBT51_CMD_GET_NAME;
-
-    lkbt51_send_cmd(payload, i, false, false);
-}
-
-void lkbt51_set_ms_swift_pair_name(const char* name) {
-    uint8_t i   = 0;
-    uint8_t len = strlen(name);
-    if (len > 13) return;
-    memset(payload, 0, PACKET_MAX_LEN);
-
-    payload[i++] = LKBT51_CMD_SET_MS_SWIFT_PAIR_NAME;
-    memcpy(payload + i, name, len);
-    i += len;
-
-    lkbt51_send_cmd(payload, i, false, false);
-}
-
-void lkbt51_factory_reset(uint8_t p2p4g_clr_msk) {
-    uint8_t i = 0;
-    memset(payload, 0, PACKET_MAX_LEN);
-
-    payload[i++] = LKBT51_CMD_FACTORY_RESET;
-    payload[i++] = p2p4g_clr_msk;
-
-    lkbt51_wake();
-    lkbt51_send_cmd(payload, i, false, false);
-    factory_reset_timer = timer_read32();
-}
-
-void lkbt51_int_pin_test(bool enable) {
-    uint8_t i = 0;
-    memset(payload, 0, PACKET_MAX_LEN);
-    payload[i++] = LKBT51_CMD_IO_TEST;
-    payload[i++] = enable;
-
-    lkbt51_send_cmd(payload, i, false, false);
-}
-
-void lkbt51_radio_test(uint8_t channel) {
-    uint8_t i = 0;
-    memset(payload, 0, PACKET_MAX_LEN);
-    payload[i++] = LKBT51_CMD_RADIO_TEST;
-    payload[i++] = channel;
-    payload[i++] = 0;
-
-    lkbt51_send_cmd(payload, i, false, false);
-}
-
-bool lkbt51_read_customize_data(uint8_t* data, uint8_t len) {
-    uint8_t i;
-    uint8_t buf[20] = {0};
-
-    i        = 0;
-    buf[i++] = 0x84;
-    buf[i++] = 0x7a;
-    buf[i++] = 0x00;
-    buf[i++] = 0x80;
-
-#if HAL_USE_SPI
-    spiStart(&WT_DRIVER, &spicfg);
-    spiSelect(&WT_DRIVER);
-    spiExchange(&WT_DRIVER, 20, buf, payload);
-    uint16_t state = buf[5] | (buf[6] << 8);
-    if (state == 0x9527) spiExchange(&WT_DRIVER, len, data, payload);
-    spiUnselect(&WT_DRIVER);
-    spiStop(&WT_DRIVER);
-#endif
-
-    return true;
-}
-
-void lkbt51_write_customize_data(uint8_t* data, uint8_t len) {
-    uint8_t i;
-    uint8_t pkt[PACKET_MAX_LEN] = {0};
-
-    i        = 0;
-    pkt[i++] = 0x84;
-    pkt[i++] = 0x7a;
-    pkt[i++] = 0x00;
-    pkt[i++] = 0x00;
-
-#if HAL_USE_SPI
-    spiStart(&WT_DRIVER, &spicfg);
-    spiSelect(&WT_DRIVER);
-    spiSend(&WT_DRIVER, i, pkt);
-    spiSend(&WT_DRIVER, len, data);
-    spiUnselectI(&WT_DRIVER);
-    spiStop(&WT_DRIVER);
-#endif
-
-    i = 0;
-    memset(payload, 0, PACKET_MAX_LEN);
-    payload[i++] = LKBT51_CMD_WRTE_CSTM_DATA;
-
-    lkbt51_send_cmd(payload, i, false, false);
-}
-#ifdef RAW_ENABLE
-void lkbt51_dfu_tx(uint8_t rsp, uint8_t* data, uint8_t len, uint8_t sn) {
-    uint16_t       checksum        = 0;
-    static uint8_t buf[RAW_EPSIZE] = {0};
-    uint8_t        i               = 0;
-    uint8_t        chunk_len       = len;
-
-    buf[i++] = 0x03;
-    buf[i++] = 0xAA;
-    buf[i++] = 0x57;
-    buf[i++] = len;
-    buf[i++] = ~len;
-    buf[i++] = sn;
-    buf[i++] = rsp;
-
-    if (chunk_len > RAW_EPSIZE - i) chunk_len = RAW_EPSIZE - i;
-    memcpy(&buf[i], data, chunk_len);
-    i += chunk_len;
-
-    for (uint8_t k = 0; k < i; k++)
-        checksum += buf[k];
-
-    raw_hid_send(buf, RAW_EPSIZE);
-
-    uint8_t offset = chunk_len;
-    while (offset < len) {
-        memset(buf, 0, RAW_EPSIZE);
-        buf[0] = 0x03;
-
-        uint8_t remaining = len - offset;
-        if (remaining > RAW_EPSIZE - 1) remaining = RAW_EPSIZE - 1;
-
-        memcpy(&buf[1], data + offset, remaining);
-        offset += remaining;
-
-        raw_hid_send(buf, RAW_EPSIZE);
-    }
-}
-#endif
-void lkbt51_dfu_rx(uint8_t* data, uint8_t length) {
-    if (data[0] == 0xAA && (data[1] == 0x55 || data[1] == 0x56) && data[2] == (~data[3] & 0xFF)) {
-        uint16_t checksum    = 0;
-        uint8_t  payload_len = data[2];
-
-        /* Check payload_len validity */
-        if (payload_len > RAW_EPSIZE - PACKECT_HEADER_LEN) return;
-
-        uint8_t* payload = &data[PACKECT_HEADER_LEN];
-
-        for (uint8_t i = 0; i < payload_len - 2; i++) {
-            checksum += payload[i];
-        }
-
-        /* Verify checksum */
-        if ((checksum & 0xFF) != payload[payload_len - 2] || checksum >> 8 != payload[payload_len - 1]) return;
-        static uint8_t sn = 0;
-
-        bool retry = true;
-        if (sn != data[4]) {
-            sn    = data[4];
-            retry = false;
-        }
-
-        if ((payload[0] & 0xF0) == 0x60) {
-            lkbt51_wake();
-            lkbt51_send_cmd(payload, payload_len - 2, data[1] == 0x56, retry);
-        }
-    }
-}
-
-static void ack_handler(uint8_t* data, uint8_t len) {
+static void ack_handler(uint8_t* data) {
     switch (data[1]) {
         case LKBT51_CMD_SEND_KB:
         case LKBT51_CMD_SEND_KB_NKRO:
@@ -830,61 +435,22 @@ static void ack_handler(uint8_t* data, uint8_t len) {
     }
 }
 
-static void query_rsp_handler(uint8_t* data, uint8_t len) {
-    if (data[2]) return;
-
-    switch (data[1]) {
-        case LKBT51_CMD_IO_TEST:
-            factory_test_send(true, data, len);
-            break;
-        default:
-            break;
-    }
-}
-
-static void lkbt51_event_handler(uint8_t evt_type, uint8_t* data, uint8_t len, uint8_t sn) {
+static void lkbt51_event_handler(uint8_t evt_type, uint8_t* data) {
     wireless_event_t event = {0};
 
     switch (evt_type) {
         case LKBT51_EVT_ACK:
-            ack_handler(data, len);
+            ack_handler(data);
             break;
         case LKBT51_EVT_RESET:
-            kc_printf("LKBT51_EVT_RESET\n");
             event.evt_type      = EVT_RESET;
             event.params.reason = data[0];
             break;
-        case LKBT51_EVT_LE_CONNECTION:
-            kc_printf("LKBT51_EVT_LE_CONNECTION\n");
-            break;
-        case LKBT51_EVT_HOST_TYPE:
-            kc_printf("LKBT51_EVT_HOST_TYPE\n");
-            break;
         case LKBT51_EVT_HID_EVENT:
-            kc_printf("LKBT51_EVT_HID_EVENT\n");
             event.evt_type   = EVT_HID_INDICATOR;
             event.params.led = data[0];
             break;
-        case LKBT51_EVT_QUERY_RSP:
-            kc_printf("LKBT51_EVT_QUERY_RSP\n\r");
-            query_rsp_handler(data, len);
-            break;
-        case LKBT51_EVT_OTA_RSP:
-#ifdef RAW_ENABLE
-            kc_printf("LKBT51_EVT_OTA_RSP\n");
-            lkbt51_dfu_tx(LKBT51_EVT_OTA_RSP, data, len, sn);
-#endif
-            break;
-        case LKBT51_CMD_RAW_HID_RX: {
-            kc_printf("LKBT51_CMD_RAW_HID_RX\n");
-            static uint8_t raw_hid_data[64];
-            memcpy(raw_hid_data, data, len);
-            event.evt_type            = EVT_RAW_HID;
-            event.params.raw_hid_data = raw_hid_data;
-        } break;
-
         default:
-            kc_printf("Unknown event!!!\n");
             break;
     }
 
@@ -897,7 +463,6 @@ void lkbt51_task(void) {
 
     static bool    wait_for_new_pkt = true;
     static uint8_t len              = 0xff;
-    static uint8_t sn               = 0;
 
     if (gpio_read_pin(WIRELESS_TO_MCU_INT_PIN) == 0) {
         uint8_t buf[BUFFER_SIZE] = {0};
@@ -906,15 +471,11 @@ void lkbt51_task(void) {
         uint8_t* pbuf = buf + VALID_DATA_START_INDEX;
 
         if (pbuf[0] == 0xAA && pbuf[1] == 0x54 && pbuf[4] == (uint8_t)(~0x54) && pbuf[5] == (uint8_t)(~0xAA)) {
-            uint16_t protol_ver = pbuf[3] << 8 | pbuf[2];
-            kc_printf("protol_ver: %x\n\r", protol_ver);
-            (void)protol_ver;
+            /* Module protocol announcement; no action required. */
         } else if (pbuf[0] == 0xAA) {
             wireless_event_t event    = {0};
             uint8_t          evt_mask = pbuf[1];
-#ifdef LKBT51_RESET_PIN
-            lkbt51_last_comm_time = 0;
-#endif
+            lkbt51_last_comm_time     = 0;
 
             if (evt_mask & LK_EVT_MSK_RESET) {
                 event.evt_type      = EVT_RESET;
@@ -936,10 +497,6 @@ void lkbt51_task(void) {
                         break;
                     case LKBT51_DISCONNECTED:
                         event.evt_type = EVT_DISCONNECTED;
-                        if (factory_reset_timer && timer_elapsed32(factory_reset_timer) < 3000) {
-                            factory_reset_timer = 0;
-                            event.data          = 1;
-                        }
                         break;
                     case LKBT51_PINCODE_ENTRY:
                         event.evt_type = EVT_BT_PINCODE_ENTRY;
@@ -981,7 +538,7 @@ void lkbt51_task(void) {
             }
 
             if (evt_mask & LK_EVT_MSK_BATT) {
-                battery_calculate_voltage(true, pbuf[6] << 8 | pbuf[5]);
+                battery_calculate_voltage(pbuf[6] << 8 | pbuf[5]);
             }
         }
 
@@ -991,7 +548,6 @@ void lkbt51_task(void) {
                 if (buf[i] == 0xAA && buf[i + 1] == 0x57     // Packet Head
                     && (~buf[i + 2] & 0xFF) == buf[i + 3]) { // Check wheather len is valid
                     len              = buf[i + 2];
-                    sn               = buf[i + 4];
                     pbuf             = &buf[i + 5];
                     wait_for_new_pkt = false;
                 }
@@ -1007,23 +563,19 @@ void lkbt51_task(void) {
             }
 
             if ((checksum & 0xff) == pbuf[len - 2] && ((checksum >> 8) & 0xff) == pbuf[len - 1]) {
-                lkbt51_event_handler(pbuf[0], pbuf + 1, len - 3, sn);
+                lkbt51_event_handler(pbuf[0], pbuf + 1);
             } else {
                 // TODO: Error handle
             }
         }
     }
     // Check if we need to reset the module
-#ifdef LKBT51_RESET_PIN
     if (lkbt51_last_comm_time && timer_elapsed32(lkbt51_last_comm_time) > LKBT51_COMM_TIMEOUT_MS) {
         gpio_write_pin_low(LKBT51_RESET_PIN);
         wait_ms(10);
         gpio_write_pin_high(LKBT51_RESET_PIN);
-        // rgb_matrix_set_color_all(255, 0, 0);
-        // rgb_matrix_driver.flush();
         wait_ms(200);
         lkbt51_connect(0, 0);
         lkbt51_last_comm_time = 0;
     }
-#endif
 }

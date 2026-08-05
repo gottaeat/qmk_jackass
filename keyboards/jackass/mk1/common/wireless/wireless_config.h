@@ -18,15 +18,5 @@
 
 #include "config.h"
 
-//
-#ifndef BT_HOST_DEVICES_COUNT
-#    define BT_HOST_DEVICES_COUNT 3
-#endif
-
-#define P2P4G_HOST_DEVICES_COUNT 1
-
-//  Uint: Second, the timer restarts on key activities.
-#ifndef CONNECTED_IDLE_TIME
-#    define CONNECTED_IDLE_TIME 7200
-#endif
-
+// Unit: seconds; the timer restarts on key activity.
+#define CONNECTED_IDLE_TIME 7200

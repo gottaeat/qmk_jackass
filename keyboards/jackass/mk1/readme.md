@@ -1,38 +1,32 @@
-# Keychron K2 HE
+# Jackass MK1
 
-![Keychron K2 HE](https://cdn.shopify.com/s/files/1/0059/0630/1017/files/K2-HE-1_d3ce1e1c-6562-4b1f-a857-ba2269478c99.jpg)
+Jackass MK1 is a focused ANSI firmware target for the Keychron K2 HE hardware. It behaves as a conventional keyboard with two fixed Hall-effect actuation profiles while retaining the stock Keychron Bluetooth, 2.4 GHz, wired, battery, charging, sleep/wake, NKRO, and wear-leveling paths.
 
-A customizable 84 keys TKL hall effect keyboard.
+- Maintainer: [gottaeat](https://github.com/gottaeat)
+- Hardware: Keychron K2 HE ANSI
+- Firmware repository: [gottaeat/qmk_jackass](https://github.com/gottaeat/qmk_jackass)
 
-* Keyboard Maintainer: [Keychron](https://github.com/keychron)
-* Hardware Supported: Keychron K2 HE
-* Hardware Availability: [Keychron K2 HE QMK/VIA Wireless Custom Mechanical Keyboard](https://www.keychron.com/products/keychron-k2-he-wireless-magnetic-switch-keyboard)
+## Default behavior
 
-## Option A: Build And Flash Firmware
+- Profile 1 (work): 2.5 mm actuation and a one-second full-board red confirmation.
+- Profile 2 (play): 1.5 mm actuation and a one-second full-board yellow confirmation.
+- The key between F12 and Delete cycles profiles.
+- `JM_PROF1`, `JM_PROF2`, and `JM_PROF_NEXT` are bindable keyboard keycodes.
+- Fn+B (`BAT_LVL`) shows the battery level.
+- Lighting is solid white. Caps Lock is red while active.
+- The physical Mac/Windows layer switch and Bluetooth/2.4 GHz/wired mode selector work through the retained Keychron paths.
+- The left modifiers are Ctrl, Option/Alt, Meta/GUI in both OS modes.
 
-Make example for this keyboard (after setting up your build environment):
+There is no VIA, factory-test, game-controller, XInput, joystick, SOCD, rapid-trigger, actuation-toggle, lighting-effect, or lighting-control support.
 
-    make keychron/k2_he/ansi:keychron
-    make keychron/k2_he/iso:keychron
-    make keychron/k2_he/jis:keychron
+## Build
 
-Flashing example for this keyboard:
+From the QMK repository root, with the project container running:
 
-    make keychron/k2_he/ansi:keychron:flash
-    make keychron/k2_he/iso:keychron:flash
-    make keychron/k2_he/jis:keychron:flash
+    docker exec qmk-jackass qmk compile -kb jackass/mk1 -km default
 
-**Reset Key**: Disconnect the USB cable, toggle mode switch to "Cable", hold down the *Esc* key or reset button underneath space bar, then connect the USB cable.
+The output is `jackass_mk1_default.bin`.
 
-See the [build environment setup](https://docs.qmk.fm/#/getting_started_build_tools) and the [make instructions](https://docs.qmk.fm/#/getting_started_make_guide) for more information. Brand new to QMK? Start with our [Complete Newbs Guide](https://docs.qmk.fm/#/newbs).
+To enter the STM32 DFU bootloader, disconnect USB, set the mode switch to Cable, hold Esc or the reset button under the space bar, and reconnect USB.
 
-## Option B: Use Keychron Launcher (no code required)
-
-If you just want to remap keys, tune Hall Effect settings, or change lighting, you don't need to build firmware:
-
-1. Open [Keychron Launcher](https://launcher.keychron.com/) in a Chromium-based browser such as Google Chrome, Microsoft Edge, Brave, Opera, or Vivaldi
-2. Connect your Keychron keyboard via USB
-3. Remap keys, configure layers, adjust lighting, and fine-tune HE sensitivity - changes apply instantly
-
-Keychron Launcher works out of the box with no JSON import required, and supports features beyond VIA such as Hall Effect actuation point tuning and rapid trigger configuration. Safari and other non-Chromium browsers will not work with Keychron Launcher.
-
+See the repository-level `PORTING_GUIDE.md` for provenance, Docker setup, portability, and validation details.

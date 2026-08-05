@@ -27,10 +27,8 @@ typedef enum {
     EVT_BT_PINCODE_ENTRY,
     EVT_EXIT_BT_PINCODE_ENTRY,
     EVT_SLEEP,
-    EVT_HID_SET_PROTOCOL,
     EVT_HID_INDICATOR,
     EVT_CONECTION_INTERVAL,
-    EVT_RAW_HID,
 } event_type_t;
 
 typedef struct {
@@ -39,9 +37,7 @@ typedef struct {
         uint8_t reason;    /* Parameters to WT_RESET event */
         uint8_t hostIndex; /* Parameters to connection event from EVT_DISCOVERABLE to EVT_DISCONECTED */
         uint8_t led;       /* Parameters to EVT_HID_INDICATOR event */
-        uint8_t protocol;  /* Parameters to EVT_HID_SET_PROTOCOL event */
         uint8_t interval;  /* Parameters to EVT_CONECTION_INTERVAL event */
-        uint8_t *raw_hid_data;
     } params;
     uint8_t data;
 } wireless_event_t;

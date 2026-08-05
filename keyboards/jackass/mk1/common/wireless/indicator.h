@@ -16,104 +16,14 @@
 
 #pragma once
 
-#include "config.h"
 #include "wireless.h"
 
 #define P24G_HOST_INDEX 24
-#define USB_HOST_INDEX 34
-
-/* Indication of pairing */
-#ifndef INDICATOR_CONFIG_PARING
-#    define INDICATOR_CONFIG_PARING {INDICATOR_BLINK, 1000, 1000, 0, true, 0};
-#endif
-
-/* Indication on Connected */
-#ifndef INDICATOR_CONFIG_CONNECTD
-#    define INDICATOR_CONFIG_CONNECTD {INDICATOR_ON_OFF, 2000, 250, 2000, true, 0};
-#endif
-
-/* Reconnecting indication */
-#ifndef INDICATOR_CONFIG_RECONNECTING
-#    define INDICATOR_CONFIG_RECONNECTING {INDICATOR_BLINK, 100, 100, 600, true, 0};
-#endif
-
-/* Disconnected indication */
-#ifndef INDICATOR_CONFIG_DISCONNECTED
-#    define INDICATOR_CONFIG_DISCONNECTED {INDICATOR_NONE, 100, 100, 600, false, 0};
-#endif
-
-/* Uint: Second */
-#ifndef DISCONNECTED_BACKLIGHT_DISABLE_TIMEOUT
-#    define DISCONNECTED_BACKLIGHT_DISABLE_TIMEOUT 40
-#endif
-
-/* Uint: Second */
-#ifndef USB_DISCONNECTED_BACKLIGHT_DISABLE_TIMEOUT
-#    define USB_DISCONNECTED_BACKLIGHT_DISABLE_TIMEOUT 3
-#endif
-
-/* Uint: Second, the timer restarts on key activities. */
-#ifndef CONNECTED_BACKLIGHT_DISABLE_TIMEOUT
-#    define CONNECTED_BACKLIGHT_DISABLE_TIMEOUT 600
-#endif
-
-/* Uint: ms */
-#ifndef LOW_BAT_LED_BLINK_PERIOD
-#    define LOW_BAT_LED_BLINK_PERIOD 1000
-#endif
-
-#ifndef LOW_BAT_LED_BLINK_TIMES
-#    define LOW_BAT_LED_BLINK_TIMES 5
-#endif
-
-#ifndef LOW_BAT_LED_TRIG_INTERVAL
-#    define LOW_BAT_LED_TRIG_INTERVAL 30000
-#endif
-
-#if ((defined(LED_MATRIX_ENABLE) || defined(RGB_MATRIX_ENABLE)) && defined(LOW_BAT_IND_INDEX))
-#    define SPACE_KEY_LOW_BAT_IND
-#endif
-
-#if BT_HOST_MAX_COUNT > 6
-#    pragma error("HOST_COUNT max value is 6")
-#endif
-
-/* DO NOT change */
-#define P24G_HOST_DEVICES_COUNT 1
-
-typedef enum {
-    INDICATOR_NONE,
-    INDICATOR_OFF,
-    INDICATOR_ON,
-    INDICATOR_ON_OFF,
-    INDICATOR_BLINK,
-    INDICATOR_LAST,
-} indicator_type_t;
-
-typedef struct PACKED {
-    indicator_type_t type;
-    uint32_t         on_time;
-    uint32_t         off_time;
-    uint32_t         duration;
-    bool             highlight;
-    uint8_t          value;
-    uint32_t         elapsed;
-} indicator_config_t;
-
-typedef struct PACKED {
-    uint8_t value;
-    bool    saved;
-} backlight_state_t;
 
 void indicator_init(void);
 void indicator_set(wt_state_t state, uint8_t host_index);
-void indicator_set_backlit_timeout(uint32_t time);
-void indicator_reset_backlit_time(void);
-bool indicator_hook_key(uint16_t keycode);
 void indicator_stop(void);
-void indicator_eeconfig_reload(void);
 bool indicator_is_running(void);
-void indicator_battery_low_enable(bool enable);
-void indicator_enable_direct_led_off(bool enable);
 
 void indicator_task(void);
+bool rgb_matrix_indicators_bt(void);

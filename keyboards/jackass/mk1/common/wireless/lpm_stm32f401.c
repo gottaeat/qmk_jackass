@@ -40,21 +40,13 @@ void lpm_post_enter_low_power(void) {
 
 void lpm_pre_wakeup(void) {
     /*  USB D+/D- */
-#if (HAL_USE_USB == TRUE)
     palSetLineMode(A11, PAL_STM32_OTYPE_PUSHPULL | PAL_STM32_OSPEED_HIGHEST | PAL_STM32_PUPDR_FLOATING | PAL_MODE_ALTERNATE(10U));
     palSetLineMode(A12, PAL_STM32_OTYPE_PUSHPULL | PAL_STM32_OSPEED_HIGHEST | PAL_STM32_PUPDR_FLOATING | PAL_MODE_ALTERNATE(10U));
-#endif
 
     /* SPI */
-#if (HAL_USE_SPI == TRUE)
     palSetLineMode(SPI_SCK_PIN, PAL_MODE_ALTERNATE(5));
-    if (SPI_MOSI_PIN != NO_PIN) {
-        palSetLineMode(SPI_MOSI_PIN, PAL_MODE_ALTERNATE(5));
-    }
-    if (SPI_MISO_PIN != NO_PIN) {
-        palSetLineMode(SPI_MISO_PIN, PAL_MODE_ALTERNATE(5));
-    }
-#endif
+    palSetLineMode(SPI_MOSI_PIN, PAL_MODE_ALTERNATE(5));
+    palSetLineMode(SPI_MISO_PIN, PAL_MODE_ALTERNATE(5));
 }
 
 bool lpm_set(pm_t mode) {
@@ -76,20 +68,7 @@ bool lpm_set(pm_t mode) {
                 ret = false;
             else {
                 SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
-                PWR->CR |=
-#if STOP_MODE_MAIN_REGULATOR_LOW_VOLTAGE
-                    PWR_CR_MRLVDS |
-#endif
-#if STOP_MODE_LOW_POWER_REGULATOR_LOW_VOLTAG
-                    PWR_CR_LPLVDS |
-#endif
-#if STOP_MODE_FLASH_POWER_DOWN
-                    PWR_CR_FPDS |
-#endif
-#if STOP_MODE_LOW_POWER_DEEPSLEEP
-                    PWR_CR_LPDS |
-#endif
-                    0;
+                PWR->CR |= PWR_CR_MRLVDS | PWR_CR_LPLVDS | PWR_CR_FPDS | PWR_CR_LPDS;
             }
             break;
 
@@ -110,7 +89,6 @@ bool lpm_set(pm_t mode) {
 }
 
 void lpm_standby(pm_t mode) {
-#if STM32_HSE_ENABLED
     /* Switch to HSI */
     RCC->CFGR = (RCC->CFGR & (~STM32_SW_MASK)) | STM32_SW_HSI;
     while ((RCC->CFGR & RCC_CFGR_SWS) != (STM32_SW_HSI << 2))
@@ -124,7 +102,6 @@ void lpm_standby(pm_t mode) {
     /* To avoid power consumption of floating GPIO */
     palSetLineMode(H0, PAL_MODE_INPUT_PULLDOWN);
     palSetLineMode(H1, PAL_MODE_INPUT_PULLDOWN);
-#endif
 
     __WFI();
 
@@ -134,7 +111,3 @@ void lpm_standby(pm_t mode) {
 void lpm_wakeup_init(void) {
     stm32_clock_init();
 }
-
-void usb_power_connect(void) {}
-
-void usb_power_disconnect(void) {}

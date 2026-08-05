@@ -15,10 +15,7 @@
  */
 
 #include "hal.h"
-
-#if (HAL_USE_RTC)
-
-#    include "rtc_timer.h"
+#include "rtc_timer.h"
 
 void rtc_timer_init(void) {
     rtc_timer_clear();
@@ -39,5 +36,3 @@ uint32_t rtc_timer_read_ms(void) {
 uint32_t rtc_timer_elapsed_ms(uint32_t last) {
     return TIMER_DIFF_32(rtc_timer_read_ms(), last);
 }
-
-#endif

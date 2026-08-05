@@ -18,45 +18,21 @@
 #include "config.h"
 
 enum {
-    BAT_NOT_CHARGING = 0,
-    BAT_CHARGING,
-    BAT_FULL_CHARGED,
+    BAT_CHARGING     = 1,
+    BAT_FULL_CHARGED = 2,
 };
 
-#ifndef FULL_VOLTAGE_VALUE
-#    define FULL_VOLTAGE_VALUE 4100
-#endif
-
-#ifndef EMPTY_VOLTAGE_VALUE
-#    define EMPTY_VOLTAGE_VALUE 3500
-#endif
-
-#ifndef SHUTDOWN_VOLTAGE_VALUE
-#    define SHUTDOWN_VOLTAGE_VALUE 3300
-#endif
-
-#ifndef VOLTAGE_MEASURE_INTERVAL
-#    define VOLTAGE_MEASURE_INTERVAL 3000
-#endif
-
-#ifndef VOLTAGE_POWER_ON_MEASURE_COUNT
-#    define VOLTAGE_POWER_ON_MEASURE_COUNT 15
-#endif
-
-#ifndef BACKLIGHT_OFF_VOLTAGE_MEASURE_INTERVAL
-#    define BACKLIGHT_OFF_VOLTAGE_MEASURE_INTERVAL 200
-#endif
+#define FULL_VOLTAGE_VALUE 4100
+#define EMPTY_VOLTAGE_VALUE 3500
+#define SHUTDOWN_VOLTAGE_VALUE 3300
+#define VOLTAGE_MEASURE_INTERVAL 3000
+#define VOLTAGE_POWER_ON_MEASURE_COUNT 15
+#define BACKLIGHT_OFF_VOLTAGE_MEASURE_INTERVAL 200
 
 void battery_init(void);
-void battery_stop(void);
 
-void     battery_measure(void);
-void     battery_calculate_voltage(bool vol_src_bt, uint16_t value);
-void     battery_set_voltage(uint16_t value);
-uint16_t battery_get_voltage(void);
-uint8_t  battery_get_percentage(void);
-bool     battery_is_empty(void);
-bool     battery_is_critical_low(void);
-bool     battery_power_on_sample(void);
-void     battery_timer_reset(void);
-void     battery_task(void);
+void    battery_calculate_voltage(uint16_t value);
+uint8_t battery_get_percentage(void);
+bool    battery_is_critical_low(void);
+void    battery_timer_reset(void);
+void    battery_task(void);
