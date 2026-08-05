@@ -23,7 +23,9 @@
 #define SNLED27351_WRITE (0 << 7)
 #define SNLED27351_PATTERN (2 << 4)
 
-pin_t cs_pins[] = SNLED27351_SELECT_PINS;
+static const pin_t cs_pins[] = SNLED27351_SELECT_PINS;
+
+#define SNLED27351_DRIVER_COUNT ARRAY_SIZE(cs_pins)
 
 // These buffers match the snled27351 PWM registers.
 // The control buffers match the PG0 LED On/Off registers.
@@ -38,7 +40,7 @@ typedef struct snled27351_driver_t {
     bool    led_control_buffer_dirty;
 } PACKED snled27351_driver_t;
 
-snled27351_driver_t driver_buffers[SNLED27351_DRIVER_COUNT] = {{
+static snled27351_driver_t driver_buffers[SNLED27351_DRIVER_COUNT] = {{
     .pwm_buffer               = {0},
     .pwm_buffer_dirty         = false,
     .led_control_buffer       = {0},

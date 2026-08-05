@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include <stdbool.h>
 #include <stdint.h>
 
 enum {
@@ -38,11 +37,8 @@ typedef struct __attribute__((__packed__)) {
 } calibrated_value_t;
 
 typedef struct __attribute__((__packed__)) {
-    bool               calibrated : 1;
     uint8_t            pressed : 1;
-    uint8_t            wait_For_release : 1;
-    uint8_t            new_calib_value : 1;
-    uint8_t            state : 4;
+    uint8_t            state : 3;
     uint8_t            confidence;
     calibrated_value_t value;
     uint32_t           full_travel_time;

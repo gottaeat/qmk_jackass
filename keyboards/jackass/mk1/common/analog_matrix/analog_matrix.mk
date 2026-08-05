@@ -1,5 +1,3 @@
-USE_FPU = yes
-
 ANALOG_MATRIX_DIR = $(TOP_DIR)/keyboards/jackass/mk1/common/analog_matrix
 SRC += \
     i2c_master.c \

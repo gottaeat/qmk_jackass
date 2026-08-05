@@ -24,6 +24,8 @@
 - [x] Remove non-ANSI layouts, VIA/raw HID, factory testing, retail/demo lighting, game-controller, joystick, XInput, SOCD, OKMC, rapid-trigger, and toggle sources.
 - [x] Add Docker build files and the porting guide.
 - [x] Audit the generated dependency/object manifest and confirm every board-local C file is consumed by the build.
+- [x] Audit every board-local header, conditional guard, linked section, exported symbol, and call path; remove only proven-dead private leftovers.
+- [x] Pass GCC static analysis across all 25 board-local C translation units without diagnostics.
 - [x] Pass QMK keyboard lint in Docker.
 - [x] Produce a QMK firmware binary in Docker.
 

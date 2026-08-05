@@ -55,8 +55,6 @@
 
 #define SNLED27351_LED_COUNT RGB_MATRIX_LED_COUNT
 
-#define SNLED27351_DRIVER_COUNT (sizeof(cs_pins) / sizeof(pin_t))
-
 typedef struct snled27351_led_t {
     uint8_t driver : 2;
     uint8_t r;

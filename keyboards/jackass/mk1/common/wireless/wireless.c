@@ -26,12 +26,6 @@
 #include "wireless_config.h"
 #include "eeprom.h"
 
-extern uint8_t         pairing_indication;
-extern host_driver_t   chibios_driver;
-extern report_buffer_t kb_rpt;
-extern uint32_t        retry_time_buffer;
-extern uint8_t         retry;
-
 static uint8_t host_index = 0;
 static uint8_t led_state  = 0;
 
@@ -220,7 +214,6 @@ static void wireless_enter_disconnected(uint8_t host_idx, uint8_t reason) {
     }
 
     report_buffer_init();
-    retry = 0;
     wireless_enter_disconnected_kb(host_idx, reason);
 
     battery_timer_reset();

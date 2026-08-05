@@ -63,7 +63,7 @@ static uint8_t       cali_state = CALIB_OFF;
 static uint8_t       cur_calib  = 0;
 static float         scale_factor[MATRIX_ROWS][MATRIX_COLS];
 
-uint8_t calibrated;
+static uint8_t calibrated;
 
 static uint8_t convert_to_travel(uint8_t row, uint8_t col, uint16_t value) {
     uint16_t travel;
@@ -211,7 +211,6 @@ static bool calibrate(void) {
 
             avg_val -= ZERO_TRAVEL_DEAD_ZONE;
             if (abs(avg_val - calib_values[r][c].zero_travel) > 30) {
-                auto_calib[r][c].new_calib_value = true;
                 calib_values[r][c].zero_travel = avg_val;
                 calib_values[r][c].full_travel = avg_val - DEFAULT_FULL_RANGE;
             }
@@ -295,11 +294,11 @@ static void auto_caliration_check(uint8_t row, uint8_t col, uint16_t value) {
 
                         // Update confidence
                         if (avg_val - p->value.full_travel > 1100) {
-                            p->confidence += p->calibrated ? 12 : 6;
+                            p->confidence += 6;
                         } else if (avg_val - p->value.full_travel > 1000) {
-                            p->confidence += p->calibrated ? 4 : 3;
+                            p->confidence += 3;
                         } else if (avg_val - p->value.full_travel > 900) {
-                            p->confidence += p->calibrated ? 3 : 2;
+                            p->confidence += 2;
                         }
                     }
 

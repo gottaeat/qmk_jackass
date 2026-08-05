@@ -29,7 +29,6 @@ void matrix_exit_low_power(void);
 void lpm_enter_low_power(void);
 void lpm_post_enter_low_power(void);
 void lpm_standby(pm_t mode);
-void lpm_early_wakeup(void);
 void lpm_wakeup_init(void);
 void lpm_pre_wakeup(void);
 void lpm_wakeup(void);

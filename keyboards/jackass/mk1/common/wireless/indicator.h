@@ -28,11 +28,8 @@
 
 typedef enum {
     INDICATOR_NONE,
-    INDICATOR_OFF,
-    INDICATOR_ON,
     INDICATOR_ON_OFF,
     INDICATOR_BLINK,
-    INDICATOR_LAST,
 } indicator_type_t;
 
 typedef struct PACKED {

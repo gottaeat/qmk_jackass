@@ -24,10 +24,9 @@
 #include "lkbt51.h"
 #include "snled27351-spi.h"
 
-extern host_driver_t   chibios_driver;
-extern host_driver_t   wireless_driver;
-extern keymap_config_t keymap_config;
-extern wt_func_t       wireless_transport;
+extern host_driver_t chibios_driver;
+extern host_driver_t wireless_driver;
+extern wt_func_t     wireless_transport;
 
 static transport_t transport = TRANSPORT_NONE;
 

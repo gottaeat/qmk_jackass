@@ -21,7 +21,6 @@ typedef enum {
     TRANSPORT_USB       = 0x01 << 0,
     TRANSPORT_BLUETOOTH = 0x01 << 1,
     TRANSPORT_P2P4      = 0x01 << 2,
-    TRANSPORT_MAX,
 } transport_t;
 
 #define TRANSPORT_WIRELESS (TRANSPORT_BLUETOOTH | TRANSPORT_P2P4)

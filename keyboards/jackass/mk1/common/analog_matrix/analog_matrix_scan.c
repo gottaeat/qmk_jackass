@@ -27,7 +27,6 @@
 
 #define ADC_GRP_NUM_CHANNELS MATRIX_ROWS
 #define ADC_GRP_BUF_DEPTH 1
-#define UNUSED_DEPTH 0
 
 static matrix_row_t analog_raw_matrix[MATRIX_ROWS];
 static pin_t        row_pins[MATRIX_ROWS] = MATRIX_ROW_PINS;
@@ -43,7 +42,7 @@ static void adcerrorcallback(ADCDriver *adcp, adcerror_t err) {
 }
 
 // clang-format off
-ADCConversionGroup adcgrpcfg = {
+static ADCConversionGroup adcgrpcfg = {
     FALSE,
     6,
     NULL,

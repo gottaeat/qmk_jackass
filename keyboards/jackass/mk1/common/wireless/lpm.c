@@ -31,7 +31,6 @@
 #include "transport.h"
 #include "battery.h"
 #include "report_buffer.h"
-#include "keychron_common.h"
 #include "snled27351-spi.h"
 
 void debounce_free(void);
@@ -102,7 +101,7 @@ void lpm_enter_low_power(void) {
     }
 }
 
-void lpm_early_wakeup(void) {
+static inline void lpm_early_wakeup(void) {
     gpio_write_pin_low(MCU_TO_WIRELESS_INT_PIN);
 }
 
@@ -138,7 +137,7 @@ bool usb_power_connected(void) {
     return gpio_read_pin(USB_POWER_SENSE_PIN) == USB_POWER_CONNECTED_LEVEL;
 }
 
-bool allow_low_power_mode(pm_t mode) {
+static bool allow_low_power_mode(pm_t mode) {
     /* Don't enter low power mode if attached to the host */
     if (mode > PM_SLEEP && usb_power_connected()) return false;
 

@@ -21,15 +21,7 @@
 
 #define RTC_MAX_TIME (24 * 3600 * 1000) // Set to 1 day
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void     rtc_timer_init(void);
 void     rtc_timer_clear(void);
 uint32_t rtc_timer_read_ms(void);
 uint32_t rtc_timer_elapsed_ms(uint32_t last);
-
-#ifdef __cplusplus
-}
-#endif

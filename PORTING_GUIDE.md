@@ -62,7 +62,11 @@ The retained paths are:
 6. Fn+1/2/3 and Fn+4 reach `keychron_wireless_common.c`. A Bluetooth host tap reconnects/selects that host; holding a Bluetooth host or the 2.4 GHz key for two seconds invokes Keychron pairing. Fn+B reaches the retained battery measurement and the focused number-row renderer while operating wirelessly on battery.
 7. Each housekeeping pass runs the physical selector, LKBT51 event parser, indicator timer, pairing-hold timer, battery task, and low-power task. RGB rendering applies brightness-scaled static white, Caps Lock red, wireless/battery indication, profile confirmation, and finally the cable-unplugged blackout.
 
-The clean-build compile flags contain the retained `LK_WIRELESS_ENABLE`, `WIRELESS_CONFIG_ENABLE`, bootmagic, DIP-switch, NKRO, RGB Matrix, EEPROM, and embedded-flash wear-leveling defines. They do not contain VIA, factory-test, joystick, gamepad, XInput, SOCD, OKMC, rapid-trigger, dynamic-keymap, or toggle-feature defines.
+The closure audit also checked every board-local header against QMK's generated dependency files and every board-local object against the final linker map. Every header is included by the build, and the linker discards no non-empty Jackass MK1 code or data section. GCC's static analyzer reports no issues across the 25 board-local C translation units.
+
+Only two conditional compilation checks remain in the board source. The active STM32 OTGv1 compatibility check applies Keychron's required `BOARD_OTG_NOVBUSSENS` handling, and the LKBT51 driver asserts that SPI is enabled. There are no inactive feature branches in the retained keyboard code.
+
+The clean-build compile flags contain the intentional board options for the USB startup path, Cortex idle behavior, and RGB brightness-off threshold, plus QMK's bootmagic, DIP-switch, NKRO, RGB Matrix, EEPROM, and embedded-flash wear-leveling feature defines. Dead Keychron feature-marker defines were removed. The flags do not contain VIA, factory-test, joystick, gamepad, XInput, SOCD, OKMC, rapid-trigger, dynamic-keymap, or toggle-feature defines.
 
 ## Board-local QMK 0.33.13 adaptations
 

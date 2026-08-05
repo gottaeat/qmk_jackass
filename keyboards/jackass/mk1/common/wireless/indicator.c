@@ -48,31 +48,12 @@ bool indicator_is_running(void) {
 }
 
 static void indicator_timer_cb(void *arg) {
-    if (*(indicator_type_t *)arg != INDICATOR_LAST) type = *(indicator_type_t *)arg;
+    type = *(indicator_type_t *)arg;
 
     bool time_up = false;
     switch (type) {
         case INDICATOR_NONE:
             break;
-        case INDICATOR_OFF:
-            next_period = 0;
-            time_up     = true;
-            break;
-
-        case INDICATOR_ON:
-            if (indicator_config.value) {
-                if (indicator_config.elapsed == 0) {
-                    indicator_config.value |= LED_ON;
-
-                    if (indicator_config.duration) {
-                        indicator_config.elapsed += indicator_config.duration;
-                    }
-                } else {
-                    time_up = true;
-                }
-            }
-            break;
-
         case INDICATOR_ON_OFF:
             if (indicator_config.value) {
                 if (indicator_config.elapsed == 0) {

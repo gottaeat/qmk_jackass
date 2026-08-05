@@ -46,8 +46,7 @@ enum {
     LKBT51_CMD_SET_CONFIG      = 0x41,
     LKBT51_CMD_SET_NAME        = 0x45,
     /* Event */
-    LKBT51_EVT_LKBT51_CMD_RECEIVED = 0xA1,
-    LKBT51_CONNECTION_EVT_ACK      = 0xA4,
+    LKBT51_CONNECTION_EVT_ACK = 0xA4,
 };
 
 enum {
@@ -79,7 +78,6 @@ enum{
     LK_EVT_MSK_BATT = 0x01 << 2,
     LK_EVT_MSK_RESET = 0x01 << 3,
     LK_EVT_MSK_RPT_INTERVAL = 0x01 << 4,
-    LK_EVT_MSK_MD = 0x01 << 7,
 };
 
 // clang-format on
@@ -108,7 +106,7 @@ wt_func_t wireless_transport = {
 // clang-format on
 
 /* Init SPI */
-const SPIConfig spicfg = {
+static const SPIConfig spicfg = {
     .circular = false,
     .slave    = false,
     .data_cb  = NULL,

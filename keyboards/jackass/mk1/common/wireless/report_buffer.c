@@ -39,17 +39,15 @@ extern wt_func_t wireless_transport;
  * if BLE is used, invoke report_buffer_set_inverval() to update the value
  */
 #define REPORT_BUFFER_RETRY_INTERVAL 2
-uint8_t report_interval = DEFAULT_2P4G_REPORT_INVERVAL_MS;
+static uint8_t report_interval = DEFAULT_2P4G_REPORT_INVERVAL_MS;
 
-static uint32_t report_timer_buffer = 0;
-uint32_t        retry_time_buffer   = 0;
-report_buffer_t report_buffer_queue[REPORT_BUFFER_QUEUE_SIZE];
-uint16_t        report_buffer_queue_head;
-uint16_t        report_buffer_queue_tail;
-report_buffer_t kb_rpt;
-uint8_t         retry = 0;
-
-void report_buffer_task(void);
+static uint32_t        report_timer_buffer = 0;
+static uint32_t        retry_time_buffer   = 0;
+static report_buffer_t report_buffer_queue[REPORT_BUFFER_QUEUE_SIZE];
+static uint16_t        report_buffer_queue_head;
+static uint16_t        report_buffer_queue_tail;
+static report_buffer_t kb_rpt;
+static uint8_t         retry = 0;
 
 void report_buffer_init(void) {
     report_buffer_queue_head = 0;
@@ -69,7 +67,7 @@ bool report_buffer_enqueue(report_buffer_t *report) {
     return true;
 }
 
-inline bool report_buffer_dequeue(report_buffer_t *report) {
+static inline bool report_buffer_dequeue(report_buffer_t *report) {
     if (report_buffer_queue_head == report_buffer_queue_tail) {
         return false;
     }
@@ -93,10 +91,6 @@ bool report_buffer_next_inverval(void) {
 
 void report_buffer_set_inverval(uint8_t interval) {
     report_interval = interval;
-}
-
-uint8_t report_buffer_get_retry(void) {
-    return retry;
 }
 
 void report_buffer_set_retry(uint8_t times) {
