@@ -60,12 +60,6 @@ bool process_record_profile(uint16_t keycode, keyrecord_t *record) {
     }
 
     switch (keycode) {
-        case JM_PROF1:
-            profile_select(0);
-            return false;
-        case JM_PROF2:
-            profile_select(1);
-            return false;
         case JM_PROF_NEXT:
             profile_select((current_profile_index + 1) % PROFILE_COUNT);
             return false;
@@ -82,6 +76,23 @@ void profile_indication_timer_check(void) {
 
 bool profile_indication_active(void) {
     return profile_indicator_running;
+}
+
+void profile_key_indication(void) {
+    for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+        for (uint8_t col = 0; col < MATRIX_COLS; col++) {
+            keypos_t key = {.row = row, .col = col};
+
+            if (keymap_key_to_keycode(layer_switch_get_layer(key), key) != JM_PROF_NEXT) {
+                continue;
+            }
+
+            uint8_t led_index = g_led_config.matrix_co[row][col];
+            if (led_index != NO_LED) {
+                rgb_matrix_set_color(led_index, 255, current_profile_index == 0 ? 0 : 255, 0);
+            }
+        }
+    }
 }
 
 void profile_indication(void) {

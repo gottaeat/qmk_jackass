@@ -29,8 +29,6 @@ enum {
     BT_HST3,
     P2P4G,
     BAT_LVL,
-    JM_PROF1,
-    JM_PROF2,
     JM_PROF_NEXT,
     NEW_SAFE_RANGE,
 };

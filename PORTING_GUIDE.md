@@ -85,12 +85,10 @@ The default profile is profile 1:
 
 | Keycode | Action | Actuation | Confirmation |
 | --- | --- | ---: | --- |
-| `JM_PROF1` | Select work profile | 2.5 mm | Full red, 1 second |
-| `JM_PROF2` | Select play profile | 1.5 mm | Full yellow, 1 second |
-| `JM_PROF_NEXT` | Cycle profile 1/2 | Selected profile | Selected profile color, 1 second |
+| `JM_PROF_NEXT` | Cycle profile 1/2 | Selected profile | Bound key stays in the selected profile color; full-board confirmation for 1 second |
 | `BAT_LVL` | Show battery gauge | n/a | Board off except white number-row gauge, 3 seconds |
 
-`JM_PROF_NEXT` defaults to the physical screenshot key between F12 and Delete. `BAT_LVL` defaults to Fn+B. These are normal keyboard keycodes in `common/keychron_common.h`, so a source keymap can bind them elsewhere.
+`JM_PROF_NEXT` defaults to the physical screenshot key between F12 and Delete. Its persistent red/yellow marker follows the key's currently resolved matrix position, so a source keymap can bind it elsewhere without changing an LED index. `BAT_LVL` defaults to Fn+B. Both are normal keyboard keycodes in `common/keychron_common.h`.
 
 ## Stock switch and wireless behavior
 

@@ -8,7 +8,8 @@
 - [x] Move the ANSI target to `keyboards/jackass/mk1` with Jackass metadata.
 - [x] Keep all board and compatibility code inside `keyboards/jackass/mk1`.
 - [x] Reduce Hall behavior to regular triggering with two persisted profiles: 2.5 mm and 1.5 mm.
-- [x] Add bindable direct/cycling profile actions and bind profile cycling to the screenshot key.
+- [x] Add the bindable `JM_PROF_NEXT` profile-cycling action and bind it to the screenshot key.
+- [x] Make the active `JM_PROF_NEXT` key stay red/yellow with the selected profile without hardcoding an LED index.
 - [x] Bind battery level to Fn+B.
 - [x] Restore Keychron's Mac Mission Control and Launchpad actions on F3/F4.
 - [x] Restore only static-white brightness and backlight toggle controls, without restoring effects or color controls.

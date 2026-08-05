@@ -73,6 +73,7 @@ static bool rgb_matrix_indicators_keychron(void) {
         rgb_matrix_set_color(CAPS_LOCK_INDEX, 255, 0, 0);
     }
 
+    profile_key_indication();
     rgb_matrix_indicators_bt();
     profile_indication();
 
