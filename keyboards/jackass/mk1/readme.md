@@ -16,7 +16,7 @@ Jackass MK1 is a focused ANSI firmware target for the Keychron K2 HE hardware. I
 - Lighting is solid white at the saved brightness. F5/F6 adjust brightness in Mac mode; Fn+F5/F6 do so in Windows mode. The key actively bound to `UG_TOGG` stays blue and toggles the backlight; it defaults to the top-right key. Caps Lock is red while active. The left GUI key is green in Mac mode and blue in Windows mode. Esc is red in wired mode, blue in Bluetooth mode, and green in 2.4 GHz mode.
 - Mac-mode F3 and F4 retain Keychron's Mission Control and Launchpad actions; Fn+F3/F4 send ordinary F3/F4.
 - The physical Mac/Windows layer switch and Bluetooth/2.4 GHz/wired mode selector work through the retained Keychron paths.
-- Bluetooth reconnect/pairing turns off the board and blinks the selected host key (Fn+1/2/3); 2.4 GHz does the same on number 4, with receiver pairing on a two-second Fn+4 hold.
+- Bluetooth reconnect/pairing turns off the board and blinks the selected host key: tap Fn+1/2/3 to select an existing host, or hold it for two seconds to pair that slot. 2.4 GHz does the same on number 4, with receiver pairing on a two-second Fn+4 hold.
 - Cable mode keeps the backlight off until USB power is present.
 - The left modifiers are Ctrl, Option/Alt, Meta/GUI in both OS modes.
 

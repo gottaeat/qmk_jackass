@@ -62,7 +62,7 @@ The retained paths are:
 6. Fn+1/2/3 and Fn+4 reach `keychron_wireless_common.c`. A Bluetooth host tap reconnects/selects that host; holding a Bluetooth host or the 2.4 GHz key for two seconds invokes Keychron pairing. Fn+B reaches the retained battery measurement and the focused number-row renderer while operating wirelessly on battery.
 7. Each housekeeping pass runs the physical selector, LKBT51 event parser, indicator timer, pairing-hold timer, battery task, and low-power task. RGB rendering applies brightness-scaled static white, Caps Lock and the persistent key markers, wireless/battery indication, profile confirmation, and finally the cable-unplugged blackout.
 
-The closure audit also checked every board-local header against QMK's generated dependency files and every board-local object against the final linker map. Every header is included by the build, and the linker discards no non-empty Jackass MK1 code or data section. GCC's static analyzer reports no issues across the 25 board-local C translation units.
+The closure audit also checked every board-local header against QMK's generated dependency files and every handwritten board-local object against the final linker map. Every header is included by the build, and the linker discards no non-empty section from those objects. QMK's generated weak LED-map fallback is discarded as expected because `mk1.c` provides the retained Keychron LED map. GCC 15.2's static analyzer reports no issues across the 25 board-local C translation units. A whole-tree analyzer build proceeds through all of them before stopping on an analyzer-only out-of-bounds report in QMK `0.33.13`'s `quantum/action.c`; the normal warning-as-error firmware build is clean.
 
 Only two conditional compilation checks remain in the board source. The active STM32 OTGv1 compatibility check applies Keychron's required `BOARD_OTG_NOVBUSSENS` handling, and the LKBT51 driver asserts that SPI is enabled. There are no inactive feature branches in the retained keyboard code.
 
@@ -80,6 +80,7 @@ Keychron's branch differs from QMK `0.33.13`. The compatibility changes are inte
 - Keychron GPIO calls use the equivalent QMK `0.33.13` GPIO names.
 - The Hall scan writes its resulting rows through QMK's current custom-matrix callback.
 - Keyboard EEPROM data is versioned and validated before profile data is used; valid external Hall calibration is restored after a keyboard-data reset.
+- The EEPROM staging buffer uses fixed local storage instead of Keychron's unchecked startup heap allocation; its size, contents, and load order are unchanged.
 
 Do not replace these paths with similar QMK-native implementations when rebasing. Start from the newer Keychron source, import it exactly, and then replay the focused reductions and local interface adaptations.
 

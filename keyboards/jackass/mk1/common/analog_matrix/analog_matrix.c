@@ -368,8 +368,7 @@ static void analog_matrix_eeconfig_init(void) {
 
     profile_init(reset_profiles);
 
-    uint8_t *buf = (uint8_t *)malloc(EECONFIG_SIZE_ANALOG_MATRIX);
-    memset(buf, 0, EECONFIG_SIZE_ANALOG_MATRIX);
+    uint8_t buf[EECONFIG_SIZE_ANALOG_MATRIX] = {0};
 
     eeprom_read_block(buf, (void *)EECONFIG_BASE_ANALOG_MATRIX, EECONFIG_SIZE_ANALOG_MATRIX);
 
@@ -421,8 +420,6 @@ static void analog_matrix_eeconfig_init(void) {
 
     auto_calibration_init();
     cali_state = CALIB_ZERO_TRAVEL_POWER_ON;
-
-    free(buf);
 }
 
 void analog_matrix_init(void) {

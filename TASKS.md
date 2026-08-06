@@ -28,6 +28,7 @@
 - [x] Audit the generated dependency/object manifest and confirm every board-local C file is consumed by the build.
 - [x] Audit every board-local header, conditional guard, linked section, exported symbol, and call path; remove only proven-dead private leftovers.
 - [x] Pass GCC static analysis across all 25 board-local C translation units without diagnostics.
+- [x] Replace Keychron's unchecked EEPROM startup heap allocation with an equivalent fixed staging buffer.
 - [x] Pass QMK keyboard lint in Docker.
 - [x] Produce a QMK firmware binary in Docker.
 
