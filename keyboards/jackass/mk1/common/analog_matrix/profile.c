@@ -15,9 +15,7 @@
 
 static const uint8_t profile_actuation_points[PROFILE_COUNT] = {25, 15};
 
-static uint8_t  current_profile_index;
-static uint32_t profile_indicator_timer;
-static bool     profile_indicator_running;
+static uint8_t current_profile_index;
 
 void profile_init(bool reset) {
     if (reset) {
@@ -39,7 +37,8 @@ uint8_t profile_get_actuation_point(void) {
 static void profile_select(uint8_t profile_index) {
     if (profile_index != current_profile_index) {
         current_profile_index = profile_index;
-        analog_matrix_clear();
+        /* Preserve regular-trigger state so every reported press can release
+         * even when the new profile has a deeper actuation point. */
         update_travel_configs();
 
         if (!eeconfig_is_kb_datablock_valid()) {
@@ -47,11 +46,6 @@ static void profile_select(uint8_t profile_index) {
         }
         analog_matrix_eeprom_update(&current_profile_index, (void *)OFFSET_CURRENT_PROFILE, sizeof(current_profile_index));
     }
-
-    profile_indicator_timer   = timer_read32();
-    profile_indicator_running = true;
-    rgb_matrix_enable_noeeprom();
-    rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_COLOR);
 }
 
 bool process_record_profile(uint16_t keycode, keyrecord_t *record) {
@@ -68,16 +62,6 @@ bool process_record_profile(uint16_t keycode, keyrecord_t *record) {
     }
 }
 
-void profile_indication_timer_check(void) {
-    if (profile_indicator_running && timer_elapsed32(profile_indicator_timer) >= 1000) {
-        profile_indicator_running = false;
-    }
-}
-
-bool profile_indication_active(void) {
-    return profile_indicator_running;
-}
-
 void profile_key_indication(void) {
     for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
         for (uint8_t col = 0; col < MATRIX_COLS; col++) {
@@ -92,17 +76,5 @@ void profile_key_indication(void) {
                 rgb_matrix_set_color(led_index, 255, current_profile_index == 0 ? 0 : 255, 0);
             }
         }
-    }
-}
-
-void profile_indication(void) {
-    if (!profile_indicator_running) {
-        return;
-    }
-
-    if (current_profile_index == 0) {
-        rgb_matrix_set_color_all(255, 0, 0);
-    } else {
-        rgb_matrix_set_color_all(255, 255, 0);
     }
 }

@@ -51,4 +51,3 @@ void analog_matrix_eeprom_update(const void *buf, void *addr, size_t len);
 
 bool analog_matrix_get_key_state(uint8_t row, uint8_t col);
 void analog_matrix_task(void);
-void analog_matrix_clear(void);

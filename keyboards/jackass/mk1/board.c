@@ -32,5 +32,5 @@ void keyboard_post_init_kb(void) {
 }
 
 bool lpm_is_kb_idle(void) {
-    return !profile_indication_active();
+    return true;
 }

@@ -46,7 +46,7 @@ Removed behavior and source:
 - RGB effects, hue/saturation/speed controls, and retail lighting.
 - Generic board/MCU/driver branches not used by the K2 HE ANSI hardware.
 
-The only visible lighting states are adjustable solid white, red Caps Lock, green/blue OS-layout status on the left GUI key, red/blue/green transport status on Esc, white wireless beacons with the rest of the board off, the white number-row battery gauge, and the requested one-second profile confirmations. The backlight can be toggled off, but no effects or color controls are exposed. Cable mode forces the backlight off while USB power is absent.
+The only visible lighting states are adjustable solid white, red Caps Lock, green/blue OS-layout status on the left GUI key, red/blue/green transport status on Esc, the persistent red/yellow profile key, white wireless beacons with the rest of the board off, and the white number-row battery gauge. The backlight can be toggled off, but no effects or color controls are exposed. Cable mode forces the backlight off while USB power is absent.
 
 ## K2 HE dependency graph audit
 
@@ -60,7 +60,7 @@ The retained paths are:
 4. The A9/A10 physical selector is debounced by `wireless_pre_task()`. Its unchanged K2 mapping selects Bluetooth, 2.4 GHz, or USB and then calls Keychron's retained `set_transport()` path.
 5. Bluetooth and 2.4 GHz commands and interrupt events pass through `lkbt51.c`, `wireless.c`, and `report_buffer.c`. Connection events feed the reduced-from-Keychron indicator state machine. Bluetooth host indices 1-3 map to LED indices 17-19; Keychron's 2.4 GHz host index 24 maps to LED index 20, the number 4 key.
 6. Fn+1/2/3 and Fn+4 reach `keychron_wireless_common.c`. A Bluetooth host tap reconnects/selects that host; holding a Bluetooth host or the 2.4 GHz key for two seconds invokes Keychron pairing. Fn+B reaches the retained battery measurement and the focused number-row renderer while operating wirelessly on battery.
-7. Each housekeeping pass runs the physical selector, LKBT51 event parser, indicator timer, pairing-hold timer, battery task, and low-power task. RGB rendering applies brightness-scaled static white, Caps Lock and the persistent key markers, wireless/battery indication, profile confirmation, and finally the cable-unplugged blackout.
+7. Each housekeeping pass runs the physical selector, LKBT51 event parser, indicator timer, pairing-hold timer, battery task, and low-power task. RGB rendering applies brightness-scaled static white, Caps Lock and the persistent key markers, wireless/battery indication, and finally the cable-unplugged blackout.
 
 The closure audit also checked every board-local header against QMK's generated dependency files and every handwritten board-local object against the final linker map. Every header is included by the build, and the linker discards no non-empty section from those objects. QMK's generated weak LED-map fallback is discarded as expected because `mk1.c` provides the retained Keychron LED map. GCC 15.2's static analyzer reports no issues across the 25 board-local C translation units. A whole-tree analyzer build proceeds through all of them before stopping on an analyzer-only out-of-bounds report in QMK `0.33.13`'s `quantum/action.c`; the normal warning-as-error firmware build is clean.
 
@@ -81,6 +81,7 @@ Keychron's branch differs from QMK `0.33.13`. The compatibility changes are inte
 - The Hall scan writes its resulting rows through QMK's current custom-matrix callback.
 - Keyboard EEPROM data is versioned and validated before profile data is used; valid external Hall calibration is restored after a keyboard-data reset.
 - The EEPROM staging buffer uses fixed local storage instead of Keychron's unchecked startup heap allocation; its size, contents, and load order are unchanged.
+- Profile changes preserve the reduced regular-trigger state and the active thresholds of pressed keys until release. Keychron's full implementation clears state because profiles can change action types; here that could strand a reported press, while changing thresholds mid-press could release and reactuate the profile key during one downstroke.
 
 Do not replace these paths with similar QMK-native implementations when rebasing. Start from the newer Keychron source, import it exactly, and then replay the focused reductions and local interface adaptations.
 
@@ -90,7 +91,7 @@ The default profile is profile 1:
 
 | Keycode | Action | Actuation | Confirmation |
 | --- | --- | ---: | --- |
-| `JM_PROF_NEXT` | Cycle profile 1/2 | Selected profile | Bound key stays in the selected profile color; full-board confirmation for 1 second |
+| `JM_PROF_NEXT` | Cycle profile 1/2 | Selected profile | Bound key stays in the selected profile color; the rest of the board is unchanged |
 | `BAT_LVL` | Show battery gauge | n/a | Board off except white number-row gauge, 3 seconds |
 
 `JM_PROF_NEXT` defaults to the physical screenshot key between F12 and Delete. Its persistent red/yellow marker follows the key's currently resolved matrix position, so a source keymap can bind it elsewhere without changing an LED index. `BAT_LVL` defaults to Fn+B. Both are normal keyboard keycodes in `common/keychron_common.h`.

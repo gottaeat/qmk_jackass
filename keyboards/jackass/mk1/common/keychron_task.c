@@ -122,7 +122,6 @@ static bool rgb_matrix_indicators_keychron(void) {
     profile_key_indication();
     status_key_indication();
     rgb_matrix_indicators_bt();
-    profile_indication();
 
     /* Cable mode has no backlight until USB power is present. */
     if (get_transport() == TRANSPORT_USB && !usb_power_connected()) {

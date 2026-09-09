@@ -8,10 +8,10 @@ Jackass MK1 is a focused ANSI firmware target for the Keychron K2 HE hardware. I
 
 ## Default behavior
 
-- Profile 1 (work): 2.5 mm actuation and a one-second full-board red confirmation.
-- Profile 2 (play): 1.5 mm actuation and a one-second full-board yellow confirmation.
+- Profile 1 (work): 2.5 mm actuation.
+- Profile 2 (play): 1.5 mm actuation.
 - The key between F12 and Delete cycles profiles.
-- `JM_PROF_NEXT` is a bindable keyboard keycode. Whichever key actively resolves to it stays red for profile 1 or yellow for profile 2.
+- `JM_PROF_NEXT` is a bindable keyboard keycode. Whichever key actively resolves to it stays red for profile 1 or yellow for profile 2; cycling profiles does not recolor the board or enable a disabled backlight.
 - Fn+B (`BAT_LVL`) turns off the board and shows the battery level in white across number keys 1-0 for three seconds while running wirelessly on battery.
 - Lighting is solid white at the saved brightness. F5/F6 adjust brightness in Mac mode; Fn+F5/F6 do so in Windows mode. The key actively bound to `UG_TOGG` stays blue and toggles the backlight; it defaults to the top-right key. Caps Lock is red while active. The left GUI key is green in Mac mode and blue in Windows mode. Esc is red in wired mode, blue in Bluetooth mode, and green in 2.4 GHz mode.
 - Mac-mode F3 and F4 retain Keychron's Mission Control and Launchpad actions; Fn+F3/F4 send ordinary F3/F4.

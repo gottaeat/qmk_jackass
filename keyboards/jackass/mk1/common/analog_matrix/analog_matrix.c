@@ -92,8 +92,23 @@ static void update_key_config(uint8_t row, uint8_t col) {
 void update_travel_configs(void) {
     for (uint8_t r = 0; r < MATRIX_ROWS; r++) {
         for (uint8_t c = 0; c < MATRIX_COLS; c++) {
-            update_key_config(r, c);
+            /* Finish a pressed key with the thresholds that began its cycle.
+             * Applying a deeper profile here can release it on the downstroke. */
+            if (analog_key_matrix[r][c].state != AKS_REGULAR_PRESSED) {
+                update_key_config(r, c);
+            }
         }
+    }
+}
+
+static void update_key_config_after_release(uint8_t row, uint8_t col) {
+    analog_key_t *p_key           = &analog_key_matrix[row][col];
+    uint8_t       actuation_point = profile_get_actuation_point() * TRAVEL_SCALE;
+
+    /* A key retained its old thresholds through a profile change. Wait until it
+     * is released past the new actuation point before arming the new profile. */
+    if (p_key->state == AKS_REGULAR_RELEASED && p_key->regular.actn_pt != actuation_point && p_key->travel < actuation_point) {
+        update_key_config(row, col);
     }
 }
 
@@ -455,7 +470,11 @@ bool update_raw_value(uint8_t row, uint8_t col, uint16_t value) {
 
     k->last_travel = k->travel;
 
-    return regular_trigger_action(k);
+    bool state_changed = regular_trigger_action(k);
+
+    update_key_config_after_release(row, col);
+
+    return state_changed;
 }
 
 bool analog_matrix_get_key_state(uint8_t row, uint8_t col) {
@@ -465,9 +484,4 @@ bool analog_matrix_get_key_state(uint8_t row, uint8_t col) {
 
 void analog_matrix_task(void) {
     calibrate();
-    profile_indication_timer_check();
-}
-
-void analog_matrix_clear(void) {
-    memset(analog_key_matrix, 0, sizeof(analog_key_matrix));
 }

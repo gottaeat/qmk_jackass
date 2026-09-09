@@ -20,7 +20,7 @@
 - [x] Retain Keychron LKBT51 Bluetooth, 2.4 GHz, wired transport switching, reports, pairing, reconnection, and wake handling.
 - [x] Port Keychron/ChibiOS's `BOARD_OTG_NOVBUSSENS` fix locally so PA9 remains the K2 HE mode-select input under QMK 0.33.13.
 - [x] Retain the K2 HE Bluetooth host 1/2/3 and 2.4 GHz number-4 connection beacons with the rest of the backlight off.
-- [x] Reduce lighting to white, red Caps Lock, white wireless/battery indication, and red/yellow profile confirmations.
+- [x] Reduce lighting to white, persistent status-key colors, and white wireless/battery indications; profile switching does not recolor the board.
 - [x] Force cable-mode backlighting off until USB power is present.
 - [x] Replay the SNLED PWM shadow after transport-change driver initialization so wired mode immediately restores the complete keyboard.
 - [x] Remove non-ANSI layouts, VIA/raw HID, factory testing, retail/demo lighting, game-controller, joystick, XInput, SOCD, OKMC, rapid-trigger, and toggle sources.
@@ -37,8 +37,8 @@
 - [ ] Flash `jackass_mk1_default.bin` onto a K2 HE ANSI board and verify boot/reset behavior.
 - [ ] Confirm every ANSI matrix position and Hall sensor calibrates and reports correctly.
 - [ ] Measure profile 1 at 2.5 mm and profile 2 at 1.5 mm on representative switches.
-- [ ] Confirm the screenshot key cycles only profiles 1 and 2 and persists the selected profile across power loss.
-- [ ] Confirm the full board shows red for one second for profile 1 and yellow for one second for profile 2, then returns to white.
+- [ ] Confirm the screenshot key cycles only profiles 1 and 2, including repeated presses, and persists the selected profile across power loss.
+- [ ] Confirm profile switching neither recolors the board nor enables a disabled backlight.
 - [ ] Confirm Caps Lock is red and returns correctly after a battery/profile indication.
 - [ ] Confirm the left GUI key is green in Mac mode and blue in Windows mode, including after Fn-layer use and temporary indications.
 - [ ] Confirm Esc is red in powered wired mode, blue in Bluetooth mode, and green in 2.4 GHz mode, and that temporary wireless/battery/profile indications retain their existing precedence.
